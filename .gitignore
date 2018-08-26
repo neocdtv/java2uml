@@ -1,3 +1,4 @@
 ./target
 ./.idea
 ./java2uml.iml
+.idea/
