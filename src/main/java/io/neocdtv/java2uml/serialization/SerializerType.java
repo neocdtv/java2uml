@@ -3,18 +3,18 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package io.neocdtv.java2uml.renderer;
+package io.neocdtv.java2uml.serialization;
 
 /**
  * @author xix
  */
-public enum RendererType {
+public enum SerializerType {
 	DOT("dot"),
 	XML("xmi");
 
 	private String value;
 
-	private RendererType(final String value) {
+	SerializerType(final String value) {
 		this.value = value;
 	}
 
@@ -22,10 +22,10 @@ public enum RendererType {
 		return value;
 	}
 
-	public static RendererType valueOfByValue(final String value) {
-		for (RendererType rendererType : RendererType.values()) {
-			if (rendererType.getValue().equals(value)) {
-				return rendererType;
+	public static SerializerType valueOfByValue(final String value) {
+		for (SerializerType serializerType : SerializerType.values()) {
+			if (serializerType.getValue().equals(value)) {
+				return serializerType;
 			}
 		}
 		throw new RuntimeException("value not supported");

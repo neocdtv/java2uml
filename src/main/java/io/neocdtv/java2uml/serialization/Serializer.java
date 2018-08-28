@@ -3,13 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package io.neocdtv.java2uml.renderer;
+package io.neocdtv.java2uml.serialization;
 
 import io.neocdtv.java2uml.model.Model;
 
 /**
  * @author xix
  */
-public interface Renderer {
-	public String renderer(final Model model);
+public interface Serializer {
+	String renderer(final Model model);
 }

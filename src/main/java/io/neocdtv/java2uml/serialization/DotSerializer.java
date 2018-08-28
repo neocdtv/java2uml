@@ -3,10 +3,10 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package io.neocdtv.java2uml.reverse;
+package io.neocdtv.java2uml.serialization;
 
 import io.neocdtv.java2uml.model.Classifier;
-import io.neocdtv.java2uml.renderer.Renderer;
+import io.neocdtv.java2uml.serialization.Serializer;
 import io.neocdtv.java2uml.model.Attribute;
 import io.neocdtv.java2uml.model.Clazz;
 import io.neocdtv.java2uml.model.Enumeration;
@@ -18,7 +18,7 @@ import io.neocdtv.java2uml.model.Package;
 import java.util.HashSet;
 import java.util.Set;
 
-public class DotRenderer implements Renderer {
+public class DotSerializer implements Serializer {
 
 	private final boolean renderPackages = false;
 	private Set<Classifier> classes = new HashSet<>();

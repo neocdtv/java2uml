@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package io.neocdtv.java2uml.reverse;
+package io.neocdtv.java2uml;
 
 /**
  * @author xix
