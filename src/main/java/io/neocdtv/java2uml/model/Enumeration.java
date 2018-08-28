@@ -12,24 +12,21 @@ import java.util.Set;
 /**
  * @author xix
  */
-public class Enumeration implements IClass {
+public class Enumeration extends Classifier {
 	private final String id;
 	private final String label;
-	private Set<String> constants;
+	private Set<String> constants = new HashSet<>();
 
 	public Enumeration(String name, final String label) {
 		this.id = name;
 		this.label = label;
 	}
 
-	public void addConstat(final String constant) {
-		getConstants().add(constant);
+	public void addConstant(final String constant) {
+		constants.add(constant);
 	}
 
 	public Set<String> getConstants() {
-		if (constants == null) {
-			constants = new HashSet<>();
-		}
 		return constants;
 	}
 

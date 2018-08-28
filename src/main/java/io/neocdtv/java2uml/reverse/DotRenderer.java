@@ -5,7 +5,7 @@
  */
 package io.neocdtv.java2uml.reverse;
 
-import io.neocdtv.java2uml.model.IClass;
+import io.neocdtv.java2uml.model.Classifier;
 import io.neocdtv.java2uml.renderer.Renderer;
 import io.neocdtv.java2uml.model.Attribute;
 import io.neocdtv.java2uml.model.Clazz;
@@ -21,25 +21,19 @@ import java.util.Set;
 public class DotRenderer implements Renderer {
 
 	private final boolean renderPackages = false;
-	private Set<IClass> classes = new HashSet<>();
+	private Set<Classifier> classes = new HashSet<>();
 
 	@Override
 	public String renderer(final Model model) {
+		// ugly hack, to remove classes from non used packages
 		model.getPackages().forEach(aPackage -> {
-			classes.addAll(aPackage.getClasses());
-		});
-		model.getPackages().forEach(aPackage -> {
-			classes.addAll(aPackage.getEnumerations());
+			classes.addAll(aPackage.getClassifiers());
 		});
 		StringBuilder dot = new StringBuilder();
 		dot.append("digraph G {\n");
 		configureLayout(dot);
 		for (final Package packageToRender : model.getPackages()) {
-			renderSubGraph(dot, packageToRender);
-		}
-		final Set<Relation> relations = model.getRelations();
-		for (final Relation relation : relations) {
-			rendererRelation(dot, relation);
+			renderPackage(dot, packageToRender);
 		}
 		dot.append("}");
 		return dot.toString();
@@ -64,7 +58,7 @@ public class DotRenderer implements Renderer {
 		dot.append("\t]\n");
 	}
 
-	private void renderSubGraph(final StringBuilder dot, final Package packageToRender) {
+	private void renderPackage(final StringBuilder dot, final Package packageToRender) {
 		if (renderPackages) {
 			dot.append("\t");
 			dot.append("subgraph ");
@@ -72,12 +66,15 @@ public class DotRenderer implements Renderer {
 			dot.append(" {\n");
 			dot.append("\t\t" + "label = \"").append(packageToRender.getLabel()).append("\"\n");
 		}
-		for (final Clazz clazz : packageToRender.getClasses()) {
-			renderClass(dot, clazz);
-		}
-		for (final Enumeration enumeration : packageToRender.getEnumerations()) {
-			renderEnumeration(dot, enumeration);
-		}
+
+		packageToRender.getClassifiers().forEach(classifier -> {
+			if (classifier instanceof Clazz) {
+				renderClass(dot, (Clazz)classifier);
+			} else if (classifier instanceof Enumeration) {
+				renderEnumeration(dot, (Enumeration) classifier);
+			}
+			classifier.getRelations().forEach(relation -> rendererRelation(dot, relation));
+		});
 		if (renderPackages) {
 			dot.append("\t}\n");
 		}
@@ -140,8 +137,8 @@ public class DotRenderer implements Renderer {
 		}
 	}
 
-	private boolean isClassComplete(final IClass clazz) {
-		for (IClass current : this.classes) {
+	private boolean isClassComplete(final Classifier clazz) {
+		for (Classifier current : this.classes) {
 			if (current.getId().equals(clazz.getId())) {
 				//System.out.println("Complete Class: " + clazz.getId());
 				return true;

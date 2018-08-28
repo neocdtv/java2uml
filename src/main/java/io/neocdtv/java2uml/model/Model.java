@@ -12,28 +12,10 @@ import java.util.Set;
  * @author xix
  */
 public class Model {
-	private Set<Clazz> classes = new HashSet<>();
-	private Set<Relation> relations = new HashSet<>();
 	private Set<Package> packages = new HashSet<>();
-
-	public void addClass(final Clazz node) {
-		classes.add(node);
-	}
-
-	public void addRelations(final Set<Relation> relations) {
-		this.relations.addAll(relations);
-	}
 
 	public void addPackage(final Package packageToAdd) {
 		packages.add(packageToAdd);
-	}
-
-	public Set<Clazz> getClasses() {
-		return classes;
-	}
-
-	public Set<Relation> getRelations() {
-		return relations;
 	}
 
 	public Package getPackage(final String packageToGet) {

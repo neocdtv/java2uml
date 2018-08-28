@@ -8,7 +8,7 @@ package io.neocdtv.java2uml.reverse;
 import io.neocdtv.java2uml.model.Clazz;
 import io.neocdtv.java2uml.model.Direction;
 import io.neocdtv.java2uml.model.Enumeration;
-import io.neocdtv.java2uml.model.IClass;
+import io.neocdtv.java2uml.model.Classifier;
 import io.neocdtv.java2uml.model.Model;
 import io.neocdtv.java2uml.model.Relation;
 import io.neocdtv.java2uml.model.RelationType;
@@ -48,34 +48,32 @@ public class ModelBuilder {
 	public static Model build(final Collection<JavaClass> classes) {
 		final Model model = new Model();
 		for (JavaClass clazz : classes) {
-			IClass modelClass;
+			Classifier modelClass;
 			if (clazz.isEnum()) {
 				modelClass = buildEnum(clazz);
 				final String packageName = clazz.getPackageName();
 				final Package aPackage = model.getPackage(packageName);
-				aPackage.addEnumeration((Enumeration) modelClass);
+				aPackage.addClassifier(modelClass);
 			} else {
 				modelClass = buildClass(clazz);
 				final String packageName = clazz.getPackageName();
 				final Package aPackage = model.getPackage(packageName);
-				aPackage.addClass((Clazz) modelClass);
+				aPackage.addClassifier(modelClass);
 			}
-			final Set<Relation> relations = buildRelations(clazz, modelClass);
+			buildRelations(clazz, modelClass);
 			//updateRelationsDirection(model.getRelations(), relations);
 			// TODO: still in progress
 			// TODO: handle scenario: Person to Address relation and back, having two Addresses (first and second), address knowing its person
-			model.addRelations(relations);
-
 		}
 		return model;
 	}
 
-	private static IClass buildEnum(JavaClass javaClass) {
+	private static Classifier buildEnum(JavaClass javaClass) {
 		final Enumeration enumeration = new Enumeration(javaClass.getCanonicalName(), javaClass.getName());
 
 		final List<JavaField> enumConstants = javaClass.getEnumConstants();
 		for (JavaField enumConstant : enumConstants) {
-			enumeration.addConstat(enumConstant.getName());
+			enumeration.addConstant(enumConstant.getName());
 		}
 		return enumeration;
 	}
@@ -94,39 +92,35 @@ public class ModelBuilder {
 		return clazz;
 	}
 
-	private static Set<Relation> buildRelations(final JavaClass clazz, final IClass fromNode) {
-		final HashSet<Relation> relations = new HashSet<>();
+	private static void buildRelations(final JavaClass clazz, final Classifier fromNode) {
 		final List<JavaClass> implementedInterfaces = clazz.getInterfaces();
-		buildInterfaceImplementation(implementedInterfaces, fromNode, relations);
-		buildSuperClass(clazz, fromNode, relations);
-		buildDepedencies(clazz, fromNode, relations);
-		return relations;
+		buildInterfaceImplementation(implementedInterfaces, fromNode);
+		buildSuperClass(clazz, fromNode);
+		buildDependencies(clazz, fromNode);
 	}
 
-	private static void buildSuperClass(final JavaClass clazz, final IClass fromNode, final HashSet<Relation> relations) {
+	private static void buildSuperClass(final JavaClass clazz, final Classifier fromNode) {
 		final JavaClass superJavaClass = clazz.getSuperJavaClass();
 		if (superJavaClass != null && !superJavaClass.isPrimitive() && !isWrapperForPrimitive(superJavaClass) && isNotJavaSuperClass(superJavaClass)) {
 			System.out.println("SuperClass: " + superJavaClass.getName());
 			if (!PACKAGES_TO_OMIT.contains(superJavaClass.getPackageName())) {
-				final Relation relation = new Relation(fromNode, buildClass(superJavaClass), RelationType.INHERITANCE, Direction.UNI);
-				relations.add(relation);
+				final Clazz toNode = buildClass(superJavaClass);
+				fromNode.addRelation(toNode, RelationType.INHERITANCE, Direction.UNI);
 			}
 		}
 	}
 
-	private static void buildInterfaceImplementation(final List<JavaClass> implementedInterfaces, final IClass fromNode, final HashSet<Relation> relations) {
+	private static void buildInterfaceImplementation(final List<JavaClass> implementedInterfaces, final Classifier fromNode) {
 		for (JavaClass implementedInterface : implementedInterfaces) {
 			if (!PACKAGES_TO_OMIT.contains(implementedInterface.getPackageName())) {
 				System.out.println("Interface: " + implementedInterface.getPackageName());
-				final Clazz buildClass = buildClass(implementedInterface);
-				final Relation relation = new Relation(fromNode, buildClass, RelationType.INTERFACE_REALIZATION, Direction.UNI);
-				relations.add(relation);
+				final Clazz toNode = buildClass(implementedInterface);
+				fromNode.addRelation(toNode, RelationType.INTERFACE_REALIZATION, Direction.UNI);
 			}
-
 		}
 	}
 
-	private static void buildDepedencies(final JavaClass clazz, final IClass fromNode, final HashSet<Relation> relations) {
+	private static void buildDependencies(final JavaClass clazz, final Classifier fromNode) {
 		final List<JavaField> fields = clazz.getFields();
 		for (JavaField field : fields) {
 			if (!PACKAGES_TO_OMIT.contains(field.getType().getPackageName())) {
@@ -150,7 +144,7 @@ public class ModelBuilder {
 						final Relation relation = new Relation(fromNode, toNode, RelationType.DEPEDENCY, Direction.UNI);
 						relation.setToNodeLabel(field.getName());
 						relation.setToNodeCardinality(cardinality);
-						relations.add(relation);
+						fromNode.addRelation(toNode, RelationType.DEPEDENCY, Direction.UNI, field.getName(), cardinality);
 					}
 				}
 			}
@@ -195,6 +189,8 @@ public class ModelBuilder {
 		return java.lang.Character.class.getSimpleName().equals(value)
 				|| java.lang.Byte.class.getSimpleName().equals(value)
 				|| java.lang.Long.class.getSimpleName().equals(value)
+				|| java.math.BigDecimal.class.getSimpleName().equals(value)
+				|| java.math.BigInteger.class.getSimpleName().equals(value)
 				|| java.lang.Boolean.class.getSimpleName().equals(value)
 				|| java.lang.Short.class.getSimpleName().equals(value)
 				|| java.lang.Integer.class.getSimpleName().equals(value)

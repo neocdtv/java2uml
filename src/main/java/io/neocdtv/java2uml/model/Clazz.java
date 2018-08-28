@@ -10,10 +10,10 @@ import java.util.Objects;
 import java.util.Set;
 
 
-public class Clazz implements IClass {
+public class Clazz extends Classifier {
 	private final String id;
 	private final String label;
-	private Set<Attribute> attributes;
+	private Set<Attribute> attributes = new HashSet<>();
 
 	public Clazz(String name, final String label) {
 		this.id = name;
@@ -21,14 +21,10 @@ public class Clazz implements IClass {
 	}
 
 	public void addAttribute(final String name, final String type, final Visibility visibility) {
-		getAttributes().add(new Attribute(name, type, visibility));
+		attributes.add(new Attribute(name, type, visibility));
 	}
 
-
 	public Set<Attribute> getAttributes() {
-		if (attributes == null) {
-			attributes = new HashSet<>();
-		}
 		return attributes;
 	}
 

@@ -1,13 +1,11 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package io.neocdtv.java2uml.model;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 /**
  * @author xix
@@ -15,8 +13,7 @@ import java.util.Set;
 public class Package {
 	private final String id;
 	private final String label;
-	private Set<Clazz> classes;
-	private Set<Enumeration> enumerations;
+	private Set<Classifier> classifiers = new HashSet<>();
 
 	public Package(String name) {
 		this.id = "cluster." + name;
@@ -31,26 +28,12 @@ public class Package {
 		return label;
 	}
 
-	public void addClass(final Clazz clazz) {
-		getClasses().add(clazz);
+	public void addClassifier(final Classifier clazz) {
+		getClassifiers().add(clazz);
 	}
 
-	public Set<Clazz> getClasses() {
-		if (classes == null) {
-			classes = new HashSet<>();
-		}
-		return classes;
-	}
-
-	public void addEnumeration(final Enumeration enumeration) {
-		getEnumerations().add(enumeration);
-	}
-
-	public Set<Enumeration> getEnumerations() {
-		if (enumerations == null) {
-			enumerations = new HashSet<>();
-		}
-		return enumerations;
+	public Set<Classifier> getClassifiers() {
+		return classifiers;
 	}
 
 	@Override
@@ -77,6 +60,4 @@ public class Package {
 		}
 		return true;
 	}
-
-
 }

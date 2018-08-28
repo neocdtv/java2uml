@@ -9,8 +9,8 @@ import java.util.Objects;
 
 
 public class Relation {
-	private final IClass fromNode;
-	private final IClass toNode;
+	private final Classifier fromNode;
+	private final Classifier toNode;
 	private final RelationType relationType;
 	private Direction direction;
 	private String toNodeLabel;
@@ -18,11 +18,20 @@ public class Relation {
 	private String toNodeCardinality;
 	private String fromNodeCardinality;
 
-	public Relation(IClass fromNode, IClass toNode, RelationType relationType, Direction direction) {
+	public Relation(Classifier fromNode, Classifier toNode, RelationType relationType, Direction direction) {
 		this.fromNode = fromNode;
 		this.toNode = toNode;
 		this.relationType = relationType;
 		this.direction = direction;
+	}
+
+	public Relation(Classifier fromNode, Classifier toNode, RelationType relationType, Direction direction, String toNodeLabel, String toNodeCardinality) {
+		this.fromNode = fromNode;
+		this.toNode = toNode;
+		this.relationType = relationType;
+		this.direction = direction;
+		this.toNodeLabel = toNodeLabel;
+		this.toNodeCardinality = toNodeCardinality;
 	}
 
 	public String getToNodeLabel() {
@@ -41,11 +50,11 @@ public class Relation {
 		this.fromNodeLabel = fromNodeLabel;
 	}
 
-	public IClass getFromNode() {
+	public Classifier getFromNode() {
 		return fromNode;
 	}
 
-	public IClass getToNode() {
+	public Classifier getToNode() {
 		return toNode;
 	}
 
