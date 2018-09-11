@@ -8,7 +8,7 @@ package io.neocdtv.modelling.reverse;
 import io.neocdtv.modelling.reverse.reverse.ModelBuilder;
 import io.neocdtv.modelling.reverse.serialization.SerializerFactory;
 import io.neocdtv.modelling.reverse.serialization.SerializerType;
-import io.neocdtv.modelling.reverse.serialization.Serializer;
+import io.neocdtv.modelling.reverse.serialization.ModelSerializer;
 import io.neocdtv.modelling.reverse.model.Model;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 
@@ -30,9 +30,9 @@ public class Main {
 	public static void main(String[] args) throws IOException {
 
 		final JavaProjectBuilder builder = new JavaProjectBuilder();
-		final String packagesArg = findCommandArgumentByName(CommandParemeterNames.PACKAGES, args);
-		final String sourceDir = findCommandArgumentByName(CommandParemeterNames.SOURCE_DIR, args);
-		final String output = findCommandArgumentByName(CommandParemeterNames.OUTPUT, args);
+		final String packagesArg = findCommandArgumentByName(CommandParameterNames.PACKAGES, args);
+		final String sourceDir = findCommandArgumentByName(CommandParameterNames.SOURCE_DIR, args);
+		final String output = findCommandArgumentByName(CommandParameterNames.OUTPUT, args);
 		final String[] packages = packagesArg.split(",");
 		for (String aPackage : packages) {
 			final String replaceAll = aPackage.replaceAll("\\.", "\\\\");
@@ -47,12 +47,12 @@ public class Main {
 
 		final Model model = ModelBuilder.build(builder.getClasses());
 
-		String rendererName = findCommandArgumentByName(CommandParemeterNames.RENDERER, args);
+		String rendererName = findCommandArgumentByName(CommandParameterNames.SERIALIZER, args);
 		if (rendererName == null) {
 			rendererName = SerializerType.DOT.getValue();
 		}
-		final Serializer serializer = SerializerFactory.buildOrGetByName(SerializerType.valueOfByValue(rendererName));
-		final String rendererDiagram = serializer.renderer(model);
+		final ModelSerializer modelSerializer = SerializerFactory.buildOrGetByName(SerializerType.valueOfByValue(rendererName));
+		final String rendererDiagram = modelSerializer.start(model);
 		FileWriter fw = new FileWriter(output);
 		fw.write(rendererDiagram);
 		fw.flush();

@@ -17,6 +17,8 @@ public class Relation {
 	private String fromNodeLabel;
 	private String toNodeCardinality;
 	private String fromNodeCardinality;
+	private boolean toNodeLabelConstant = false;
+	private Visibility toNodeVisibility;
 
 	public Relation(Classifier fromNode, Classifier toNode, RelationType relationType, Direction direction) {
 		this.fromNode = fromNode;
@@ -25,13 +27,22 @@ public class Relation {
 		this.direction = direction;
 	}
 
-	public Relation(Classifier fromNode, Classifier toNode, RelationType relationType, Direction direction, String toNodeLabel, String toNodeCardinality) {
+	public Relation(Classifier fromNode,
+	                Classifier toNode,
+	                RelationType relationType,
+	                Direction direction,
+	                String toNodeLabel,
+	                String toNodeCardinality,
+	                boolean toNodeConstant,
+									Visibility toNodeVisibility) {
 		this.fromNode = fromNode;
 		this.toNode = toNode;
 		this.relationType = relationType;
 		this.direction = direction;
 		this.toNodeLabel = toNodeLabel;
 		this.toNodeCardinality = toNodeCardinality;
+		this.toNodeLabelConstant = toNodeConstant;
+		this.toNodeVisibility = toNodeVisibility;
 	}
 
 	public String getToNodeLabel() {
@@ -84,6 +95,22 @@ public class Relation {
 
 	public void setFromNodeCardinality(String fromNodeCardinality) {
 		this.fromNodeCardinality = fromNodeCardinality;
+	}
+
+	public boolean isToNodeLabelConstant() {
+		return toNodeLabelConstant;
+	}
+
+	public void setToNodeLabelConstant(boolean toNodeLabelConstant) {
+		this.toNodeLabelConstant = toNodeLabelConstant;
+	}
+
+	public Visibility getToNodeVisibility() {
+		return toNodeVisibility;
+	}
+
+	public void setToNodeVisibility(Visibility toNodeVisibility) {
+		this.toNodeVisibility = toNodeVisibility;
 	}
 
 	@Override

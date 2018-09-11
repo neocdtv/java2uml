@@ -13,13 +13,11 @@ import java.util.Set;
  * @author xix
  */
 public class Enumeration extends Classifier {
-	private final String id;
-	private final String label;
+
 	private Set<String> constants = new HashSet<>();
 
-	public Enumeration(String name, final String label) {
-		this.id = name;
-		this.label = label;
+	public Enumeration(String id, final String label) {
+		super(id, label);
 	}
 
 	public void addConstant(final String constant) {
@@ -30,38 +28,4 @@ public class Enumeration extends Classifier {
 		return constants;
 	}
 
-	@Override
-	public String getId() {
-		return id;
-	}
-
-	@Override
-	public String getLabel() {
-		return label;
-	}
-
-	@Override
-	public int hashCode() {
-		int hash = 3;
-		hash = 67 * hash + Objects.hashCode(this.id);
-		return hash;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final Enumeration other = (Enumeration) obj;
-		if (!Objects.equals(this.id, other.id)) {
-			return false;
-		}
-		return true;
-	}
 }

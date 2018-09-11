@@ -10,6 +10,6 @@ import io.neocdtv.modelling.reverse.model.Model;
 /**
  * @author xix
  */
-public interface Serializer {
-	String renderer(final Model model);
+public interface ModelSerializer {
+	String start(final Model model);
 }

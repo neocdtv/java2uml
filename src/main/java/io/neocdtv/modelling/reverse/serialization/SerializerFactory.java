@@ -9,16 +9,16 @@ package io.neocdtv.modelling.reverse.serialization;
  * @author xix
  */
 public class SerializerFactory {
-	private static Serializer dotSerializer;
+	private static ModelSerializer dotModelSerializer;
 
-	public static Serializer buildOrGetByName(final SerializerType commandRenderer) {
+	public static ModelSerializer buildOrGetByName(final SerializerType commandRenderer) {
 		switch (commandRenderer) {
 			case DOT:
-				if (dotSerializer == null) {
-					dotSerializer = new DotSerializer();
+				if (dotModelSerializer == null) {
+					dotModelSerializer = new DotModelSerializer();
 				}
-				return dotSerializer;
+				return dotModelSerializer;
 		}
-		throw new RuntimeException("not implemented renderer type");
+		throw new RuntimeException("not implemented start type");
 	}
 }

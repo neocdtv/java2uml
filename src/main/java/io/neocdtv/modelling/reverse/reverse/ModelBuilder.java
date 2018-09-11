@@ -50,7 +50,6 @@ public class ModelBuilder {
 				final Package aPackage = model.getPackage(packageName);
 				aPackage.addClassifier(modelClass);
 			}
-			// TODO: check if class is in loaded sources/sourceTree
 
 			buildRelations(clazz, modelClass);
 			// TODO: updateRelationsDirection(model.getRelations(), relations);
@@ -82,13 +81,17 @@ public class ModelBuilder {
 			final String fieldName = field.getName();
 			if (determineIfFieldShouldTreatedAsAnAttribute(fieldsType)) {
 				LOGGER.info("building class: " + canonicalName + ", adding field: " + fieldName + " with type: " + fieldsType.getCanonicalName());
-				final boolean constant = field.isStatic() && !fieldName.matches("[a-z]*") && field.isFinal();
+				final boolean constant = isConstant(field, fieldName);
 				clazz.addAttribute(fieldName, fieldsType.getName(), determineVisibility(field), constant);
 			} else {
 				LOGGER.info("building class: " + canonicalName + ", not adding field: " + fieldName + " with type: " + fieldsType.getCanonicalName());
 			}
 		}
 		return clazz;
+	}
+
+	private static boolean isConstant(JavaField field, String fieldName) {
+		return field.isStatic() && !fieldName.matches("[a-z]*") && field.isFinal();
 	}
 
 	private static void buildRelations(final JavaClass clazz, final Classifier fromNode) {
@@ -126,7 +129,7 @@ public class ModelBuilder {
 	private static void buildDependencies(final JavaClass clazz, final Classifier fromNode) {
 		final List<JavaField> fields = clazz.getFields();
 		for (JavaField field : fields) {
-			if (!field.isEnumConstant()) { // COMMENT: omit dependency from enum constants to the enum
+			if (!field.isEnumConstant()) { // COMMENT: omit dependency from enum constants to the same enum
 				final JavaClass fieldClass = field.getType();
 				if (!fieldClass.isPrimitive()) {
 					String cardinality = null;
@@ -143,20 +146,23 @@ public class ModelBuilder {
 						toNode = buildClass(fieldClass);
 					}
 					// TODO: add cardinality to the relation type.isArray()
-					final Relation relation = new Relation(fromNode, toNode, RelationType.DEPEDENCY, Direction.UNI);
-					relation.setToNodeLabel(field.getName());
-					relation.setToNodeCardinality(cardinality);
-					fromNode.addRelation(toNode, RelationType.DEPEDENCY, Direction.UNI, field.getName(), cardinality);
+					fromNode.addRelation(toNode,
+							RelationType.DEPEDENCY,
+							Direction.UNI,
+							field.getName(),
+							cardinality,
+							isConstant(field, field.getName()),
+							determineVisibility(field));
 				}
 			}
 		}
 	}
 
 	// TODO: complete and use it
-	private static void updateRelationsDirection(final Set<Relation> relationsInGraph, final Set<Relation> relationsToBeAddedToGraph) {
-		for (Relation relationToBeAddedToGraph : relationsToBeAddedToGraph) {
-			if (RelationType.DEPEDENCY.equals(relationToBeAddedToGraph.getRelationType())) {
-				updateRelationDirection(relationsInGraph, relationToBeAddedToGraph);
+	private static void updateRelationsDirection(final Set<Relation> relations, final Set<Relation> relationsToBeAdded) {
+		for (Relation relationToBeAdded : relationsToBeAdded) {
+			if (RelationType.DEPEDENCY.equals(relationToBeAdded.getRelationType())) {
+				updateRelationDirection(relations, relationToBeAdded);
 			}
 		}
 	}

@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package io.neocdtv.modelling.reverse.serialization;
 
 import io.neocdtv.modelling.reverse.model.Classifier;
@@ -18,14 +13,14 @@ import io.neocdtv.modelling.reverse.model.Package;
 import java.util.HashSet;
 import java.util.Set;
 
-public class DotSerializer implements Serializer {
+public class DotModelSerializer implements ModelSerializer {
 
-	private final boolean renderPackages = false;
-	private final boolean renderConstants = false; // Underscore uppercase, final, static
+	private final boolean doPackages = true;
+	private final boolean doConstants = false;
 	private Set<Classifier> classes = new HashSet<>();
 
 	@Override
-	public String renderer(final Model model) {
+	public String start(final Model model) {
 		// ugly hack, to remove classes from non used/not loaded packages
 		model.getPackages().forEach(aPackage -> {
 			classes.addAll(aPackage.getClassifiers());
@@ -33,11 +28,27 @@ public class DotSerializer implements Serializer {
 		StringBuilder dot = new StringBuilder();
 		dot.append("digraph G {\n");
 		configureLayout(dot);
-		for (final Package packageToRender : model.getPackages()) {
-			renderPackage(dot, packageToRender);
-		}
+
+		doPackagesWithClassifiers(model, dot);
+		doRelations(model, dot);
+
 		dot.append("}");
 		return dot.toString();
+	}
+
+	private void doPackagesWithClassifiers(Model model, StringBuilder dot) {
+		for (final Package currentPackage : model.getPackages()) {
+			doPackageWithClassifiers(dot, currentPackage);
+		}
+	}
+
+	private void doRelations(Model model, StringBuilder dot) {
+		for (final Package currentPackage : model.getPackages()) {
+			currentPackage.getClassifiers().forEach(classifier -> {
+				classifier.getRelations().forEach(relation -> doRelation(dot, relation));
+			});
+			doPackageWithClassifiers(dot, currentPackage);
+		}
 	}
 
 	private void configureLayout(StringBuilder dot) {
@@ -59,29 +70,28 @@ public class DotSerializer implements Serializer {
 		dot.append("\t]\n");
 	}
 
-	private void renderPackage(final StringBuilder dot, final Package packageToRender) {
-		if (renderPackages) {
+	private void doPackageWithClassifiers(final StringBuilder dot, final Package currnetPackage) {
+		if (doPackages) {
 			dot.append("\t");
 			dot.append("subgraph ");
-			dot.append("\"").append(packageToRender.getId()).append("\"");
+			dot.append("\"").append(currnetPackage.getId()).append("\"");
 			dot.append(" {\n");
-			dot.append("\t\t" + "label = \"").append(packageToRender.getLabel()).append("\"\n");
+			dot.append("\t\t" + "label = \"").append(currnetPackage.getLabel()).append("\"\n");
 		}
 
-		packageToRender.getClassifiers().forEach(classifier -> {
+		currnetPackage.getClassifiers().forEach(classifier -> {
 			if (classifier instanceof Clazz) {
-				renderClass(dot, (Clazz) classifier);
+				doClass(dot, (Clazz) classifier);
 			} else if (classifier instanceof Enumeration) {
-				renderEnumeration(dot, (Enumeration) classifier);
+				doEnumeration(dot, (Enumeration) classifier);
 			}
-			classifier.getRelations().forEach(relation -> rendererRelation(dot, relation));
 		});
-		if (renderPackages) {
+		if (doPackages) {
 			dot.append("\t}\n");
 		}
 	}
 
-	private void renderEnumeration(final StringBuilder dot, final Enumeration enumeration) {
+	private void doEnumeration(final StringBuilder dot, final Enumeration enumeration) {
 		dot.append("\t\t");
 		dot.append("\"").append(enumeration.getId()).append("\"");
 		dot.append(" [\n");
@@ -97,7 +107,7 @@ public class DotSerializer implements Serializer {
 		dot.append("}\"\n\t\t]\n");
 	}
 
-	private void renderClass(final StringBuilder dot, final Clazz node) {
+	private void doClass(final StringBuilder dot, final Clazz node) {
 		dot.append("\t\t");
 		dot.append("\"").append(node.getId()).append("\"");
 		dot.append(" [\n");
@@ -106,64 +116,60 @@ public class DotSerializer implements Serializer {
 		dot.append(node.getLabel());
 		dot.append("|");
 		for (Attribute attribute : node.getAttributes()) {
-			if (!attribute.isConstant()) {
-				renderAttribute(dot, attribute);
+			if (!attribute.isConstant() || doConstants) {
+				doAttribute(dot, attribute);
 			}
 		}
 		node.getRelations().stream().filter(relation -> relation.getRelationType().equals(RelationType.DEPEDENCY)).forEach(relation -> {
 			final Classifier toNode = relation.getToNode();
-			if (!isClassSourceAvailable(toNode)) {
-				renderClassifierAsAttribute(dot, toNode, relation.getToNodeLabel());
+			if (!isClassifierPackageAvailable(toNode) && (!relation.isToNodeLabelConstant() || doConstants)) {
+				doClassifierAsAttribute(dot, toNode, relation.getToNodeLabel(), relation.getToNodeVisibility());
 			}
 		});
-		for (Attribute attribute : node.getAttributes()) {
-			if (!attribute.isConstant()) {
-				renderAttribute(dot, attribute);
-			}
-		}
 		dot.append("|");
 		dot.append("}\"\n\t\t]\n");
 	}
 
-	private void renderAttribute(StringBuilder dot, Attribute attribute) {
-		dot.append(rendererVisibility(attribute.getVisibility()));
-		dot.append(" ");
+	private void doAttribute(StringBuilder dot, Attribute attribute) {
+		//dot.append(doVisibility(attribute.getVisibility()));
+		//dot.append(" ");
 		dot.append(attribute.getName());
 		dot.append(" : ");
 		dot.append(attribute.getType());
 		dot.append("\\l");
 	}
 
-	private void renderClassifierAsAttribute(StringBuilder dot, Classifier classifier, String name) {
-		dot.append(" ");
+	private void doClassifierAsAttribute(StringBuilder dot, Classifier classifier, String name, Visibility visibility) {
+		//dot.append(doVisibility(visibility));
+		//dot.append(" ");
 		dot.append(name);
 		dot.append(" : ");
 		dot.append(classifier.getLabel());
 		dot.append("\\l");
 	}
 
-	private void rendererRelation(final StringBuilder dot, final Relation relation) {
-		if (isClassSourceAvailable(relation.getToNode())) {
+	private void doRelation(final StringBuilder dot, final Relation relation) {
+		if (isClassifierPackageAvailable(relation.getToNode())) {
 			dot.append("\t");
 			dot.append("\"").append(relation.getToNode().getId()).append("\"");
 			dot.append(" -> ");
 			dot.append("\"").append(relation.getFromNode().getId()).append("\"");
 			switch (relation.getRelationType()) {
 				case INTERFACE_REALIZATION:
-					rendererInterfaceImplemenatation(dot);
+					doInterfaceImplementation(dot);
 					break;
 				case INHERITANCE:
-					rendererInheritance(dot);
+					doInheritance(dot);
 					break;
 				case DEPEDENCY:
-					rendererDependency(relation, dot);
+					doDependency(relation, dot);
 					break;
 			}
 			dot.append("\n");
 		}
 	}
 
-	private boolean isClassSourceAvailable(final Classifier clazz) {
+	private boolean isClassifierPackageAvailable(final Classifier clazz) {
 		for (Classifier current : this.classes) {
 			if (current.getId().equals(clazz.getId())) {
 				return true;
@@ -172,7 +178,7 @@ public class DotSerializer implements Serializer {
 		return false;
 	}
 
-	private String rendererVisibility(final Visibility visibility) {
+	private String doVisibility(final Visibility visibility) {
 		switch (visibility) {
 			case PRIVATE:
 				return "-";
@@ -184,17 +190,17 @@ public class DotSerializer implements Serializer {
 		return "";
 	}
 
-	private void rendererInterfaceImplemenatation(StringBuilder dot) {
+	private void doInterfaceImplementation(StringBuilder dot) {
 		dot.append(" [dir=back, style=dashed, arrowtail=empty]");
 	}
 
-	private void rendererInheritance(StringBuilder dot) {
+	private void doInheritance(StringBuilder dot) {
 		dot.append(" [dir=back, arrowtail=empty]");
 	}
 
-	private void rendererDependency(Relation relation, StringBuilder dot) {
+	private void doDependency(Relation relation, StringBuilder dot) {
 		switch (relation.getDirection()) {
-			case BI: // still in progress see: method updateRelationsDirection
+			case BI: // COMMENT: still in progress see: method updateRelationsDirection
 				final String toNodeLabel = relation.getToNodeLabel();
 				final String fromNodeLabel = relation.getFromNodeLabel();
 				dot.append(String.format(" [dir=none, arrowtail=empty, taillabel=\" %s\", headlabel=\" %s \"]", toNodeLabel, fromNodeLabel));
@@ -204,7 +210,7 @@ public class DotSerializer implements Serializer {
 				if (relation.getToNodeCardinality() != null) {
 					label = label + " \n" + relation.getToNodeCardinality();
 				}
-				dot.append(String.format(" [dir=back, arrowtail=open ,taillabel=\" %s \"]", label)); // play also with labelangle=\"-7\"
+				dot.append(String.format(" [dir=back, arrowtail=open ,taillabel=\" %s \"]", label)); // COMMENT: lay also with labelangle=\"-7\"
 				break;
 		}
 	}

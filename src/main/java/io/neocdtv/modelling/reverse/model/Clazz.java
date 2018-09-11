@@ -11,13 +11,10 @@ import java.util.Set;
 
 
 public class Clazz extends Classifier {
-	private final String id;
-	private final String label;
 	private Set<Attribute> attributes = new HashSet<>();
 
-	public Clazz(String name, final String label) {
-		this.id = name;
-		this.label = label;
+	public Clazz(String id, final String label) {
+		super(id, label);
 	}
 
 	public void addAttribute(final String name, final String type, final Visibility visibility) {
@@ -32,38 +29,4 @@ public class Clazz extends Classifier {
 		return attributes;
 	}
 
-	@Override
-	public String getId() {
-		return id;
-	}
-
-	@Override
-	public String getLabel() {
-		return label;
-	}
-
-	@Override
-	public int hashCode() {
-		int hash = 7;
-		hash = 97 * hash + Objects.hashCode(this.id);
-		return hash;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final Clazz other = (Clazz) obj;
-		if (!Objects.equals(this.id, other.id)) {
-			return false;
-		}
-		return true;
-	}
 }
