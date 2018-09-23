@@ -5,6 +5,8 @@
  */
 package io.neocdtv.modelling.reverse.domain.customer;
 
+import io.neocdtv.modelling.reverse.domain.customer.address.Address;
+
 import java.util.Map;
 import java.util.Set;
 
