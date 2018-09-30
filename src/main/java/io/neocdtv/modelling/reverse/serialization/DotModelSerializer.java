@@ -15,7 +15,7 @@ import java.util.Set;
 
 public class DotModelSerializer implements ModelSerializer {
 
-	private final boolean doPackages = true;
+	private final boolean doPackages = false;
 	private final boolean doConstants = false;
 	private Set<Classifier> classes = new HashSet<>();
 
@@ -72,6 +72,7 @@ public class DotModelSerializer implements ModelSerializer {
 
 	private void doPackageWithClassifiers(final StringBuilder dot, final Package currnetPackage) {
 		if (doPackages) {
+			// TODO: how to render package in dot, can subraphs be configured with shape like nodes and edges?
 			dot.append("\t");
 			dot.append("subgraph ");
 			dot.append("\"").append(currnetPackage.getId()).append("\"");

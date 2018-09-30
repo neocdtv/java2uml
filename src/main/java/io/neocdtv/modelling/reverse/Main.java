@@ -19,71 +19,63 @@ import java.util.logging.Logger;
  */
 public class Main {
 
-	// example: -r -packages=io.neocdtv.modelling.reverse.domain.customer -sourceDir=C:\Projects\java2uml\src\main\java -output=C:\Reverse\domain.dot
-	// TODO: how to render package in dot, can subraphs be configured with shape like nodes and edges
-	private static final Logger LOGGER = Logger.getLogger(Main.class.getCanonicalName());
+  private static final Logger LOGGER = Logger.getLogger(Main.class.getCanonicalName());
 
-	public static void main(String[] args) throws IOException {
+  public static void main(String[] args) throws IOException {
 
-		final JavaProjectBuilder builder = new JavaProjectBuilder();
-		final String packagesArg = findCommandArgumentByName(CommandParameterNames.PACKAGES, args);
-		final String sourceDir = findCommandArgumentByName(CommandParameterNames.SOURCE_DIR, args);
-		final String output = findCommandArgumentByName(CommandParameterNames.OUTPUT, args);
+    final String packages = CliUtil.findCommandArgumentByName(CommandParameterNames.PACKAGES, args);
+    final String sourceDir = CliUtil.findCommandArgumentByName(CommandParameterNames.SOURCE_DIR, args);
+    final String outputFile = CliUtil.findCommandArgumentByName(CommandParameterNames.OUTPUT_FILE, args);
 
-		final boolean recursiveSearch = isCommandArgumentPresent(CommandParameterNames.RECURSIVE_PACKAGE_SEARCH, args);
+    if (packages == null || sourceDir == null || outputFile == null) {
+      System.out.println("usage: java -jar target/java2uml.jar -packages=... -sourceDir=... -outputFile=... [-r]");
+      System.exit(1);
+    }
 
-		// TODO: add the possibility to add just certain java-files, not just whole packages
-		// TODO: think about it, how to combine it with -packages
-		final String[] packages = packagesArg.split(",");
-		for (String aPackage : packages) {
-			final String replaceAll = aPackage.replaceAll("\\.", "\\\\");
-			final String packageDir = sourceDir + "\\" + replaceAll;
-			final File directory = new File(packageDir);
-			LOGGER.log(Level.INFO, "adding scanning {0}", directory.getAbsolutePath());
-			//final boolean exists = directory.exists();
-			if (recursiveSearch) {
-				builder.addSourceTree(directory);
-			} else {
-				Arrays.stream(directory.listFiles()).filter(file -> file.getName().endsWith("java")).forEach(sourceFile -> {
-					try {
-						builder.addSource(sourceFile); // COMMENT: this way one class can be added
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				});
-			}
-		}
+    final boolean recursivePackagesEnabled = CliUtil.isCommandArgumentPresent(CommandParameterNames.RECURSIVE_PACKAGE_SEARCH, args);
+    final JavaProjectBuilder builder = configureSourceFilesForAnalysis(packages, sourceDir, recursivePackagesEnabled);
 
-		final Model model = ModelBuilder.build(builder.getClasses());
+    final Model model = ModelBuilder.build(builder.getClasses());
 
-		String rendererName = findCommandArgumentByName(CommandParameterNames.SERIALIZER, args);
-		if (rendererName == null) {
-			rendererName = SerializerType.DOT.getValue();
-		}
-		final ModelSerializer modelSerializer = SerializerFactory.buildOrGetByName(SerializerType.valueOfByValue(rendererName));
-		final String rendererDiagram = modelSerializer.start(model);
-		FileWriter fw = new FileWriter(output);
-		fw.write(rendererDiagram);
-		fw.flush();
-	}
+    serialize(args, outputFile, model);
+  }
 
-	private static String findCommandArgumentByName(final String argToNameForFind, final String[] args) {
-		String argValue = null;
-		for (String argToCheck : args) {
-			final String[] split = argToCheck.split("=");
-			if (split[0].equals(argToNameForFind)) {
-				argValue = split[1];
-			}
-		}
-		return argValue;
-	}
+  private static JavaProjectBuilder configureSourceFilesForAnalysis(String argumentPackages, String argumentSourceDir, boolean recursiveSearch) {
+    // TODO: add the possibility to add just certain java-files, not just whole packages;think about it, how to combine it with -packages
+    final JavaProjectBuilder builder = new JavaProjectBuilder();
+    final String[] packages = argumentPackages.split(",");
+    for (String aPackage : packages) {
+      final String replaceAll = aPackage.replaceAll("\\.", File.separator);
+      final String packageDir = argumentSourceDir + File.separator + replaceAll;
+      final File directory = new File(packageDir);
+      if (recursiveSearch) {
+        LOGGER.log(Level.INFO, "recursive package scanning {0}", directory.getAbsolutePath());
+        builder.addSourceTree(directory);
+      } else {
+        LOGGER.log(Level.INFO, "non-recursive package scanning {0}", directory.getAbsolutePath());
+        Arrays.stream(directory.listFiles()).filter(file -> file.getName().endsWith("java")).forEach(sourceFile -> {
+          try {
+            builder.addSource(sourceFile); // COMMENT: this way one class can be added
+          } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+          }
+        });
+      }
+    }
+    return builder;
+  }
 
-	private static boolean isCommandArgumentPresent(final String argToNameForFind, final String[] args) {
-		for (String argToCheck : args) {
-			if (argToCheck.equals(argToNameForFind)) {
-				return true;
-			}
-		}
-		return false;
-	}
+  private static void serialize(String[] args, String argumentOutputFile, Model model) throws IOException {
+    String rendererName = CliUtil.findCommandArgumentByName(CommandParameterNames.SERIALIZER, args);
+    if (rendererName == null) {
+      LOGGER.info("defaulting to dot serializer");
+      rendererName = SerializerType.DOT.getValue();
+    }
+    final ModelSerializer modelSerializer = SerializerFactory.buildOrGetByName(SerializerType.valueOfByValue(rendererName));
+    final String rendererDiagram = modelSerializer.start(model);
+    FileWriter fw = new FileWriter(argumentOutputFile);
+    fw.write(rendererDiagram);
+    fw.flush();
+  }
 }

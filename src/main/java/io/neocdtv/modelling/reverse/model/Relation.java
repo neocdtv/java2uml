@@ -1,12 +1,10 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package io.neocdtv.modelling.reverse.model;
 
 import java.util.Objects;
 
+/**
+ * @author xix
+ */
 
 public class Relation {
 	private final Classifier fromNode;

@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package io.neocdtv.modelling.reverse.model;
 
 import java.util.HashSet;
@@ -14,6 +9,7 @@ import java.util.Set;
  */
 public class Enumeration extends Classifier {
 
+	// TODO: how to show in model Set<String>, currently the following is shown: constants: String
 	private Set<String> constants = new HashSet<>();
 
 	public Enumeration(String id, final String label) {
