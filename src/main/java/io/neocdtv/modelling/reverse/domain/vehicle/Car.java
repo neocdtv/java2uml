@@ -5,12 +5,14 @@
  */
 package io.neocdtv.modelling.reverse.domain.vehicle;
 
+import javax.persistence.Entity;
 import java.util.Date;
 import java.util.List;
 
 /**
  * @author xix
  */
+@Entity
 public class Car {
 	private String modelCode;
 	private List<Feature> features;

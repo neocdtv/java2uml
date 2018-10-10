@@ -127,25 +127,25 @@ public class ModelBuilder {
 			if (!field.isEnumConstant()) { // COMMENT: omit dependency from enum constants to the same enum
 				final JavaClass fieldClass = field.getType();
 				if (!fieldClass.isPrimitive()) {
-					String cardinality = null;
+					boolean toNodeCardinalityCollection = false;
 					Clazz toNode;
 					// TODO: handle array
 					// TODO: handle map
 					// TODO: maps in uml?
 					if (fieldClass.isA(Collection.class.getName())) {
-						cardinality = "0..*"; // COMMENT: defaulting to 0..* and not to * since the * is easily overshadowed by other elements during rendering
+						toNodeCardinalityCollection = true;
 						final List<JavaType> actualTypeArguments = ((DefaultJavaParameterizedType) fieldClass).getActualTypeArguments();
 						final DefaultJavaType genericTypeVariable = (DefaultJavaType) actualTypeArguments.get(0);
 						toNode = buildClass(genericTypeVariable);
 					} else {
 						toNode = buildClass(fieldClass);
 					}
-					// TODO: add cardinality to the relation type.isArray()
+					// TODO: add toNodeCardinalityCollection to the relation type.isArray()
 					fromNode.addRelation(toNode,
 							RelationType.DEPEDENCY,
 							Direction.UNI,
 							field.getName(),
-							cardinality,
+							toNodeCardinalityCollection,
 							isConstant(field, field.getName()),
 							determineVisibility(field));
 				}

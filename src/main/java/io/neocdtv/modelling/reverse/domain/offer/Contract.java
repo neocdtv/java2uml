@@ -5,9 +5,12 @@
  */
 package io.neocdtv.modelling.reverse.domain.offer;
 
+import javax.persistence.Entity;
+
 /**
  * @author xix
  */
+@Entity
 public class Contract {
 	private Offer offer;
 	private String status;

@@ -37,10 +37,10 @@ public abstract class Classifier {
 	                        RelationType relationType,
 	                        Direction direction,
 	                        String toNodeLabel,
-	                        String toNodeCardinality,
+	                        boolean toNodeCardinalityCollection,
 													boolean toNodeConstant,
 													Visibility toNodeVisibility) {
-		final Relation relation = new Relation(this, toNode, relationType, direction, toNodeLabel, toNodeCardinality, toNodeConstant, toNodeVisibility);
+		final Relation relation = new Relation(this, toNode, relationType, direction, toNodeLabel, toNodeCardinalityCollection, toNodeConstant, toNodeVisibility);
 		relations.add(relation);
 	}
 

@@ -9,19 +9,22 @@ import java.util.Set;
  */
 public class Enumeration extends Classifier {
 
-	// TODO: how to show in model Set<String>, currently the following is shown: constants: String
-	private Set<String> constants = new HashSet<>();
+  // TODO: how to show in model Set<String>, currently the following is shown: constants: String
+  // try: if classifier will be rendered as an attribute add (0..* ->) e.g.
+  // (0..* -> ) String (-> can also be a link to this type, if available on a second diagram)
+  // (->) Person
+  private Set<String> constants = new HashSet<>();
 
-	public Enumeration(String id, final String label) {
-		super(id, label);
-	}
+  public Enumeration(String id, final String label) {
+    super(id, label);
+  }
 
-	public void addConstant(final String constant) {
-		constants.add(constant);
-	}
+  public void addConstant(final String constant) {
+    constants.add(constant);
+  }
 
-	public Set<String> getConstants() {
-		return constants;
-	}
+  public Set<String> getConstants() {
+    return constants;
+  }
 
 }

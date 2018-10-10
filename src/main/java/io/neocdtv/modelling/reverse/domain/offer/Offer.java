@@ -8,12 +8,14 @@ package io.neocdtv.modelling.reverse.domain.offer;
 import io.neocdtv.modelling.reverse.domain.customer.ICustomer;
 import io.neocdtv.modelling.reverse.domain.vehicle.Car;
 
+import javax.persistence.Entity;
 import java.util.Date;
 import java.util.Set;
 
 /**
  * @author xix
  */
+@Entity
 public class Offer {
 	private Date date;
 	private Set<ICustomer> keepers;

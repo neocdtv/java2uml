@@ -8,6 +8,45 @@
     <finalName>${name}</finalName>
     <plugins>
       <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.2.1</version>
+        <executions>
+          <execution>
+            <id>player-core</id>
+            <phase>test</phase>
+            <goals>
+              <goal>java</goal>
+            </goals>
+            <configuration>
+              <mainClass>io.neocdtv.modelling.reverse.Main</mainClass>
+              <arguments>
+                <argument>-r</argument>
+                <argument>-packages=io.neocdtv.player.core</argument>
+                <argument>-sourceDir=../player-core/src/main/java</argument>
+                <argument>-outputFile=target/io.neocdtv.player.core</argument>
+              </arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <id>domain</id>
+            <phase>test</phase>
+            <goals>
+              <goal>java</goal>
+            </goals>
+            <configuration>
+              <mainClass>io.neocdtv.modelling.reverse.Main</mainClass>
+              <arguments>
+                <argument>-r</argument>
+                <argument>-packages=io.neocdtv.modelling.reverse.domain</argument>
+                <argument>-sourceDir=src/main/java</argument>
+                <argument>-outputFile=target/io.neocdtv.modelling.reverse.domain</argument>
+              </arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <artifactId>maven-shade-plugin</artifactId>
         <version>${shade.version}</version>
         <executions>

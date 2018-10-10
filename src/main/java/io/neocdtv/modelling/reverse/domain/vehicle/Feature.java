@@ -5,9 +5,12 @@
  */
 package io.neocdtv.modelling.reverse.domain.vehicle;
 
+import javax.persistence.Entity;
+
 /**
  * @author xix
  */
+@Entity
 public class Feature {
 	private String type;
 

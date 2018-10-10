@@ -5,9 +5,12 @@
  */
 package io.neocdtv.modelling.reverse.domain.customer;
 
+import javax.persistence.Entity;
+
 /**
  * @author xix
  */
+@Entity
 public class Customer implements ICustomer {
 	protected int attribute;
 

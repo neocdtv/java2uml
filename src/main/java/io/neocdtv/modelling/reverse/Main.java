@@ -1,5 +1,8 @@
 package io.neocdtv.modelling.reverse;
 
+import com.thoughtworks.qdox.model.JavaAnnotatedElement;
+import com.thoughtworks.qdox.model.JavaAnnotation;
+import com.thoughtworks.qdox.model.JavaClass;
 import io.neocdtv.modelling.reverse.reverse.ModelBuilder;
 import io.neocdtv.modelling.reverse.serialization.SerializerFactory;
 import io.neocdtv.modelling.reverse.serialization.SerializerType;
@@ -7,12 +10,17 @@ import io.neocdtv.modelling.reverse.serialization.ModelSerializer;
 import io.neocdtv.modelling.reverse.model.Model;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 
+import javax.persistence.Entity;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 /**
  * @author xix
@@ -35,9 +43,27 @@ public class Main {
     final boolean recursivePackagesEnabled = CliUtil.isCommandArgumentPresent(CommandParameterNames.RECURSIVE_PACKAGE_SEARCH, args);
     final JavaProjectBuilder builder = configureSourceFilesForAnalysis(packages, sourceDir, recursivePackagesEnabled);
 
-    final Model model = ModelBuilder.build(builder.getClasses());
+    List<JavaClass> entities = builder.getClasses().
+        stream().
+        filter(javaClass -> shouldClassifierBeProcessed(javaClass)).
+        collect(Collectors.toList());
+    final Model model = ModelBuilder.build(entities);
 
     serialize(args, outputFile, model);
+  }
+
+  private static boolean shouldClassifierBeProcessed(final JavaClass javaClass) {
+    return isAnnotatedWith(javaClass.getAnnotations(), Entity.class)
+        || javaClass.isInterface()
+        || javaClass.isEnum()
+        || javaClass.isAbstract();
+  }
+
+  private static boolean isAnnotatedWith(final List<JavaAnnotation> annotations, final Class<?> type) {
+    return !annotations.
+        stream().
+        filter(annotation -> annotation.getType().getFullyQualifiedName().equals(type.getCanonicalName())).
+        collect(Collectors.toList()).isEmpty();
   }
 
   private static JavaProjectBuilder configureSourceFilesForAnalysis(String argumentPackages, String argumentSourceDir, boolean recursiveSearch) {
