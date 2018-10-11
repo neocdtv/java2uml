@@ -1,5 +1,6 @@
 package io.neocdtv.modelling.reverse.reverse;
 
+import com.thoughtworks.qdox.model.JavaAnnotation;
 import com.thoughtworks.qdox.model.JavaClass;
 import com.thoughtworks.qdox.model.JavaField;
 import com.thoughtworks.qdox.model.JavaType;
@@ -15,10 +16,13 @@ import io.neocdtv.modelling.reverse.model.Relation;
 import io.neocdtv.modelling.reverse.model.RelationType;
 import io.neocdtv.modelling.reverse.model.Visibility;
 
+import javax.persistence.Entity;
+import javax.persistence.EntityManager;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * @author xix
@@ -57,7 +61,7 @@ public class ModelBuilder {
 	private static Classifier buildEnum(final JavaClass javaClass) {
 		final String canonicalName = javaClass.getCanonicalName();
 		LOGGER.info("building enum: " + canonicalName);
-		final Enumeration enumeration = new Enumeration(canonicalName, javaClass.getName());
+		final Enumeration enumeration = new Enumeration(canonicalName, javaClass.getName(), javaClass.getPackageName());
 		final List<JavaField> enumConstants = javaClass.getEnumConstants();
 		for (JavaField enumConstant : enumConstants) {
 			final String constantName = enumConstant.getName();
@@ -70,7 +74,8 @@ public class ModelBuilder {
 	private static Clazz buildClass(final JavaClass javaClass) {
 		final String canonicalName = javaClass.getCanonicalName();
 		LOGGER.info("building class: " + canonicalName);
-		final Clazz clazz = new Clazz(canonicalName, javaClass.getValue());
+
+		final Clazz clazz = new Clazz(canonicalName, javaClass.getValue(), javaClass.getPackageName(), determineStereotype(javaClass));
 		for (JavaField field : javaClass.getFields()) {
 			final JavaClass fieldsType = field.getType();
 			final String fieldName = field.getName();
@@ -84,6 +89,21 @@ public class ModelBuilder {
 		}
 		return clazz;
 	}
+
+	private static String determineStereotype(final JavaClass javaClass) {
+		if (isAnnotatedWith(javaClass.getAnnotations(), Entity.class)) {
+			return "entity";
+		}
+		return null;
+	}
+
+	private static boolean isAnnotatedWith(final List<JavaAnnotation> annotations, final Class<?> type) {
+		return !annotations.
+				stream().
+				filter(annotation -> annotation.getType().getFullyQualifiedName().equals(type.getCanonicalName())).
+				collect(Collectors.toList()).isEmpty();
+	}
+
 
 	private static boolean isConstant(JavaField field, String fieldName) {
 		return field.isStatic() && !fieldName.matches("[a-z]*") && field.isFinal();

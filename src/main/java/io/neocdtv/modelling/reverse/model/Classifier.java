@@ -13,11 +13,19 @@ public abstract class Classifier {
 	private final String id;
 	// COMMENT: label is ClassName
 	private final String label;
+	private final String packageName;
+	private final String stereotype;
 	private final Set<Relation> relations = new HashSet<>();
 
-	public Classifier(String name, final String label) {
+	public Classifier(String name, final String label, final String packageName) {
+		this(name, label, packageName, null);
+	}
+
+	public Classifier(String name, final String label, final String packageName, final String stereotype) {
 		this.id = name;
 		this.label = label;
+		this.packageName = packageName;
+		this.stereotype = stereotype;
 	}
 
 	public String getId() {
@@ -26,6 +34,18 @@ public abstract class Classifier {
 
 	public String getLabel() {
 		return label;
+	}
+
+	public String getPackageName() {
+		return packageName;
+	}
+
+	public boolean hasStereotype() {
+		return this.stereotype != null;
+	}
+
+	public String getStereotype() {
+		return stereotype;
 	}
 
 	public void addRelation(Classifier toNode, RelationType relationType, Direction direction) {

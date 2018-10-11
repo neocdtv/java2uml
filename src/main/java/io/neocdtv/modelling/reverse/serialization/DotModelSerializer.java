@@ -92,19 +92,23 @@ public class DotModelSerializer implements ModelSerializer {
     }
   }
 
-  private void doEnumeration(final StringBuilder dot, final Enumeration enumeration) {
+  private void doEnumeration(final StringBuilder dot, final Enumeration node) {
     dot.append("\t\t");
-    dot.append("\"").append(enumeration.getId()).append("\"");
+    dot.append("\"").append(node.getId()).append("\"");
     dot.append(" [\n");
     dot.append("\t\t\tlabel = ");
     dot.append("\"{");
-    dot.append(enumeration.getLabel());
+    if (node.hasStereotype()) {
+      dot.append("\\<\\<" + node.getStereotype() + "\\>\\>");
+      dot.append("\\n");
+    }
+    dot.append(node.getLabel());
     dot.append("|");
-    for (String enumConstant : enumeration.getConstants()) {
+    for (String enumConstant : node.getConstants()) {
       dot.append(enumConstant);
       dot.append("\\l");
     }
-    dot.append("|");
+    //dot.append("|"); - methods
     dot.append("}\"\n\t\t]\n");
   }
 
@@ -114,6 +118,10 @@ public class DotModelSerializer implements ModelSerializer {
     dot.append(" [\n");
     dot.append("\t\t\tlabel = ");
     dot.append("\"{");
+    if (node.hasStereotype()) {
+      dot.append("\\<\\<" + node.getStereotype() + "\\>\\>");
+      dot.append("\\n");
+    }
     dot.append(node.getLabel());
     dot.append("|");
     for (Attribute attribute : node.getAttributes()) {
@@ -127,7 +135,7 @@ public class DotModelSerializer implements ModelSerializer {
         doClassifierAsAttribute(dot, toNode, relation.getToNodeLabel(), relation.getToNodeVisibility());
       }
     });
-    dot.append("|");
+    //dot.append("|"); - methods
     dot.append("}\"\n\t\t]\n");
   }
 

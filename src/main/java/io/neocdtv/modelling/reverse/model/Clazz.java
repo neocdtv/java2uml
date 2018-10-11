@@ -8,8 +8,8 @@ import java.util.Set;
 public class Clazz extends Classifier {
 	private Set<Attribute> attributes = new HashSet<>();
 
-	public Clazz(String id, final String label) {
-		super(id, label);
+	public Clazz(String id, final String label, final String packageName, final String stereotype) {
+		super(id, label, packageName, stereotype);
 	}
 
 	public void addAttribute(final String name, final String type, final Visibility visibility) {
@@ -23,5 +23,4 @@ public class Clazz extends Classifier {
 	public Set<Attribute> getAttributes() {
 		return attributes;
 	}
-
 }

@@ -15,8 +15,8 @@ public class Enumeration extends Classifier {
   // (->) Person
   private Set<String> constants = new HashSet<>();
 
-  public Enumeration(String id, final String label) {
-    super(id, label);
+  public Enumeration(String id, final String label, final String packageName) {
+    super(id, label, packageName, null);
   }
 
   public void addConstant(final String constant) {

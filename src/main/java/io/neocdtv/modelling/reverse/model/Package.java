@@ -10,11 +10,13 @@ import java.util.Set;
 public class Package {
 	private final String id;
 	private final String label;
+	private final String name;
 	private Set<Classifier> classifiers = new HashSet<>();
 
 	public Package(String name) {
 		this.id = "cluster." + name;
 		this.label = "Package " + name;
+		this.name = name;
 	}
 
 	public String getId() {
@@ -31,6 +33,10 @@ public class Package {
 
 	public Set<Classifier> getClassifiers() {
 		return classifiers;
+	}
+
+	public String getName() {
+		return name;
 	}
 
 	@Override
