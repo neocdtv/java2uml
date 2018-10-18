@@ -34,8 +34,12 @@ public class Main {
 
 	public static void main(String[] args) throws IOException {
 
+		// TODO: collect multiple packages
 		final String packages = CliUtil.findCommandArgumentByName(CommandParameterNames.PACKAGES, args);
+		// TODO: multiple sourceDirs?
 		final String sourceDir = CliUtil.findCommandArgumentByName(CommandParameterNames.SOURCE_DIR, args);
+		// TODO: change file to dir, to write multiple packages
+		// TODO: how to determine name of the files, it can't be the package, cos you can have multiple packages separated by a comma.
 		final String outputFile = CliUtil.findCommandArgumentByName(CommandParameterNames.OUTPUT_FILE, args);
 
 		if (packages == null || sourceDir == null || outputFile == null) {
@@ -53,29 +57,31 @@ public class Main {
 		Model model = ModelBuilder.build(classes);
 
 		// remove class w/o relation of type dependency to and from
-		filterOutClassifiersWithOutDependenciesToAndFrom(model);
+		removeClassifiersWithOutDependenciesToAndFromIncludedPackages(model);
 		serialize(args, outputFile, model);
 	}
 
-	private static void filterOutClassifiersWithOutDependenciesToAndFrom(Model model) {
+	// COMMENT: this is an ugly one method
+	// TODO: This method removes lonely classfiers, but this should be changes to render clusters of connected classes
+	private static void removeClassifiersWithOutDependenciesToAndFromIncludedPackages(Model model) {
 		for (Package aPackage : model.getPackages()) {
 			final Iterator<Classifier> iterator = aPackage.getClassifiers().iterator();
 			while (iterator.hasNext()) {
-				final Classifier classifier = iterator.next();
-				final String XXX = classifier.getId();
-				if (classifier.getRelations().isEmpty() || hasOnlyRelationsToNotIncludedPackages(classifier, model.getPackages())) {
+				final Classifier classifierToCheck = iterator.next();
+				final String classfierId = classifierToCheck.getId();
+				if (classifierToCheck.getRelations().isEmpty() || hasOnlyRelationsToNotIncludedPackages(classifierToCheck, model.getPackages())) {
 					boolean shouldBeRemoved = true;
 					for (Package aPackage1 : model.getPackages()) {
-						for (Classifier classifier1 : aPackage1.getClassifiers()) {
-							for (Relation relation : classifier1.getRelations()) {
-								if (relation.getToNode().getId().equals(XXX)) {
+						for (Classifier classifier : aPackage1.getClassifiers()) {
+							for (Relation relation : classifier.getRelations()) {
+								if (relation.getToNode().getId().equals(classfierId)) {
 									shouldBeRemoved = false;
 								}
 							}
 						}
 					}
 					if (shouldBeRemoved) {
-						LOGGER.info("REMOVING " + XXX);
+						LOGGER.info("REMOVING " + classfierId);
 						iterator.remove();
 					}
 				}
