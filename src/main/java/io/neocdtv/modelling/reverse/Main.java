@@ -44,9 +44,10 @@ public class Main {
 		final String outputFile = CliUtil.findCommandArgumentByName(CommandParameterNames.OUTPUT_FILE, args);
 
 		if (packages == null || sourceDir == null || outputFile == null) {
-			System.out.println("usage: java -jar target/java2uml.jar -packages=... -sourceDir=... -outputFile=... [-r]");
+			System.out.println("usage: java -jar target/java2uml.jar -packages=... -sourceDir=... -outputFile=... [-r] [-ecore]");
 			System.out.println("options:");
-			System.out.println("\t-r recursive package scanning");
+			System.out.println("\t-r\trecursive package scanning");
+			System.out.println("\t-ecore\tuse Ecore internally (alpha)");
 			System.exit(1);
 		}
 
@@ -119,6 +120,8 @@ public class Main {
 		final JavaProjectBuilder builder = new JavaProjectBuilder();
 		final String[] packages = argumentPackages.split(",");
 		for (String aPackage : packages) {
+			String replaceSeparator;
+			// TODO: OS specific aPackage.replaceAll, add support for unix-like OS
 			final String replaceAll = aPackage.replaceAll("\\.", File.separator + File.separator);
 			final String packageDir = argumentSourceDir + File.separator + replaceAll;
 			final File directory = new File(packageDir);
