@@ -4,10 +4,12 @@ CLI tool to generate UML from Java Code. There is currently a small bug, which m
 
 How
 =====
+
 build
 ======
 mvn clean install
 During the build a sample graphviz dot-file will be generated in target/io.neocdtv.modelling.reverse.domain representing the internal custom model. The easiest way to view it is to go to http://viz-js.com/ and paste its content.
+
 run
 ======
 The build will generate a jar, which can be used like:
