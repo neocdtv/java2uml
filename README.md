@@ -14,11 +14,18 @@ During the build a sample graphviz dot-file will be generated in target/io.neocd
 run
 ======
 The build will generate a jar, which can be used like:
+
 usage: java -jar target/java2uml.jar -packages=... -sourceDir=... -outputFile=... [-r] [-ecore]
+
 options:
+
         -r      recursive package scanning
+        
         -ecore  use Ecore internally (alpha)
         
+        
+        
 example: java -jar target/java2uml.jar -packages=io.neocdtv.modelling.reverse.domain -sourceDir=src/main/java -outputFile=output.dot -r
+
 This will generate a representation of the simple test domain-model. To view it go to http://viz-js.com/ and paste its content.
 
