@@ -9,6 +9,8 @@ public class CommandParameterNames {
   static final String OUTPUT_FILE = "-outputFile";
 
   static final String RECURSIVE_PACKAGE_SEARCH = "-r";
+  static final String USE_ECORE = "-ecore";
+
   // TODO:
   static final String SERIALIZER = "-serializer";
   static final String SERIALIZE_PACKAGES = "-p";

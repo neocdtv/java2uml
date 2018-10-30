@@ -3,21 +3,24 @@ package io.neocdtv.modelling.reverse;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.model.JavaAnnotation;
 import com.thoughtworks.qdox.model.JavaClass;
-import io.neocdtv.modelling.reverse.model.Classifier;
-import io.neocdtv.modelling.reverse.model.Model;
-import io.neocdtv.modelling.reverse.model.Package;
-import io.neocdtv.modelling.reverse.model.Relation;
+import com.thoughtworks.qdox.model.JavaPackage;
+import io.neocdtv.modelling.reverse.model.custom.Classifier;
+import io.neocdtv.modelling.reverse.model.custom.Model;
+import io.neocdtv.modelling.reverse.model.custom.Package;
+import io.neocdtv.modelling.reverse.model.custom.Relation;
 import io.neocdtv.modelling.reverse.reverse.ModelBuilder;
+import io.neocdtv.modelling.reverse.reverse.ECoreModelBuilder;
+import io.neocdtv.modelling.reverse.serialization.DotCustomModelSerializer;
+import io.neocdtv.modelling.reverse.serialization.DotECoreModelSerializer;
 import io.neocdtv.modelling.reverse.serialization.ModelSerializer;
-import io.neocdtv.modelling.reverse.serialization.SerializerFactory;
-import io.neocdtv.modelling.reverse.serialization.SerializerType;
+import org.eclipse.emf.ecore.EPackage;
 
-import javax.persistence.Entity;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -50,15 +53,24 @@ public class Main {
 		final boolean recursivePackagesEnabled = CliUtil.isCommandArgumentPresent(CommandParameterNames.RECURSIVE_PACKAGE_SEARCH, args);
 		final JavaProjectBuilder builder = configureSourceFilesForAnalysis(packages, sourceDir, recursivePackagesEnabled);
 
-		Collection<JavaClass> classes = builder.getClasses();
+		if(CliUtil.isCommandArgumentPresent(CommandParameterNames.USE_ECORE, args)) {
+			generateUsingECoreModel(outputFile, builder.getPackages(), builder.getClasses());
+		} else {
+			generateUsingCustomModel(outputFile, builder.getClasses());
+		}
+	}
 
-		//classes = filter(classes);
+	private static void generateUsingECoreModel(final String outputFile, final Collection<JavaPackage> qPackages ,final Collection<JavaClass> qClasses) throws IOException {
+		final Set<EPackage> ePackages = ECoreModelBuilder.build(qPackages);
+		serialize(outputFile, ePackages, qClasses);
+	}
 
+	private static void generateUsingCustomModel(final String outputFile, final Collection<JavaClass> classes) throws IOException {
 		Model model = ModelBuilder.build(classes);
 
 		// remove class w/o relation of type dependency to and from
 		removeClassifiersWithOutDependenciesToAndFromIncludedPackages(model);
-		serialize(args, outputFile, model);
+		serialize(outputFile, model);
 	}
 
 	// COMMENT: this is an ugly one method
@@ -102,28 +114,6 @@ public class Main {
 		return hasOnlyRelationsToNotIncludedPackages;
 	}
 
-	private static Collection<JavaClass> filter(Collection<JavaClass> classes) {
-		classes = classes.
-				stream().
-				filter(javaClass -> shouldClassifierBeProcessed(javaClass)).
-				collect(Collectors.toList());
-		return classes;
-	}
-
-	private static boolean shouldClassifierBeProcessed(final JavaClass javaClass) {
-		return isAnnotatedWith(javaClass.getAnnotations(), Entity.class)
-				|| javaClass.isInterface()
-				|| javaClass.isEnum()
-				|| javaClass.isAbstract();
-	}
-
-	private static boolean isAnnotatedWith(final List<JavaAnnotation> annotations, final Class<?> type) {
-		return !annotations.
-				stream().
-				filter(annotation -> annotation.getType().getFullyQualifiedName().equals(type.getCanonicalName())).
-				collect(Collectors.toList()).isEmpty();
-	}
-
 	private static JavaProjectBuilder configureSourceFilesForAnalysis(String argumentPackages, String argumentSourceDir, boolean recursiveSearch) {
 		// TODO: add the possibility to add just certain java-files, not just whole packages;think about it, how to combine it with -packages
 		final JavaProjectBuilder builder = new JavaProjectBuilder();
@@ -150,13 +140,16 @@ public class Main {
 		return builder;
 	}
 
-	private static void serialize(String[] args, String argumentOutputFile, Model model) throws IOException {
-		String rendererName = CliUtil.findCommandArgumentByName(CommandParameterNames.SERIALIZER, args);
-		if (rendererName == null) {
-			LOGGER.info("defaulting to dot serializer");
-			rendererName = SerializerType.DOT.getValue();
-		}
-		final ModelSerializer modelSerializer = SerializerFactory.buildOrGetByName(SerializerType.valueOfByValue(rendererName));
+	private static void serialize(final String argumentOutputFile, final Set<EPackage> ePackages, final Collection<JavaClass> qClasses) throws IOException {
+		final DotECoreModelSerializer modelSerializer = new DotECoreModelSerializer();
+		final String rendererDiagram = modelSerializer.start(ePackages, new HashSet<>(qClasses));
+		FileWriter fw = new FileWriter(argumentOutputFile);
+		fw.write(rendererDiagram);
+		fw.flush();
+	}
+
+	private static void serialize(String argumentOutputFile, Model model) throws IOException {
+		final ModelSerializer modelSerializer = new DotCustomModelSerializer();
 		final String rendererDiagram = modelSerializer.start(model);
 		FileWriter fw = new FileWriter(argumentOutputFile);
 		fw.write(rendererDiagram);

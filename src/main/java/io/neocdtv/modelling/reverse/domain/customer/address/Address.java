@@ -7,12 +7,10 @@ package io.neocdtv.modelling.reverse.domain.customer.address;
 
 import io.neocdtv.modelling.reverse.domain.customer.Person;
 
-import javax.persistence.Entity;
 
 /**
  * @author xix
  */
-@Entity
 public class Address extends Object{
 	private int street;
 	private int city;

@@ -6,18 +6,16 @@ import com.thoughtworks.qdox.model.JavaField;
 import com.thoughtworks.qdox.model.JavaType;
 import com.thoughtworks.qdox.model.impl.DefaultJavaParameterizedType;
 import com.thoughtworks.qdox.model.impl.DefaultJavaType;
-import io.neocdtv.modelling.reverse.model.Classifier;
-import io.neocdtv.modelling.reverse.model.Clazz;
-import io.neocdtv.modelling.reverse.model.Direction;
-import io.neocdtv.modelling.reverse.model.Enumeration;
-import io.neocdtv.modelling.reverse.model.Model;
-import io.neocdtv.modelling.reverse.model.Package;
-import io.neocdtv.modelling.reverse.model.Relation;
-import io.neocdtv.modelling.reverse.model.RelationType;
-import io.neocdtv.modelling.reverse.model.Visibility;
+import io.neocdtv.modelling.reverse.model.custom.Classifier;
+import io.neocdtv.modelling.reverse.model.custom.Clazz;
+import io.neocdtv.modelling.reverse.model.custom.Direction;
+import io.neocdtv.modelling.reverse.model.custom.Enumeration;
+import io.neocdtv.modelling.reverse.model.custom.Model;
+import io.neocdtv.modelling.reverse.model.custom.Package;
+import io.neocdtv.modelling.reverse.model.custom.Relation;
+import io.neocdtv.modelling.reverse.model.custom.RelationType;
+import io.neocdtv.modelling.reverse.model.custom.Visibility;
 
-import javax.persistence.Entity;
-import javax.persistence.EntityManager;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -75,7 +73,7 @@ public class ModelBuilder {
 		final String canonicalName = javaClass.getCanonicalName();
 		LOGGER.info("building class: " + canonicalName);
 
-		final Clazz clazz = new Clazz(canonicalName, javaClass.getValue(), javaClass.getPackageName(), determineStereotype(javaClass));
+		final Clazz clazz = new Clazz(canonicalName, javaClass.getValue(), javaClass.getPackageName(), null);
 		for (JavaField field : javaClass.getFields()) {
 			final JavaClass fieldsType = field.getType();
 			final String fieldName = field.getName();
@@ -90,20 +88,12 @@ public class ModelBuilder {
 		return clazz;
 	}
 
-	private static String determineStereotype(final JavaClass javaClass) {
-		if (isAnnotatedWith(javaClass.getAnnotations(), Entity.class)) {
-			return "entity";
-		}
-		return null;
-	}
-
 	private static boolean isAnnotatedWith(final List<JavaAnnotation> annotations, final Class<?> type) {
 		return !annotations.
 				stream().
 				filter(annotation -> annotation.getType().getFullyQualifiedName().equals(type.getCanonicalName())).
 				collect(Collectors.toList()).isEmpty();
 	}
-
 
 	private static boolean isConstant(JavaField field, String fieldName) {
 		return field.isStatic() && !fieldName.matches("[a-z]*") && field.isFinal();

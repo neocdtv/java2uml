@@ -10,7 +10,7 @@ public class SerializerFactory {
 		switch (commandRenderer) {
 			case DOT:
 				if (dotModelSerializer == null) {
-					dotModelSerializer = new DotModelSerializer();
+					dotModelSerializer = new DotCustomModelSerializer();
 				}
 				return dotModelSerializer;
 		}

@@ -1,4 +1,4 @@
-package io.neocdtv.modelling.reverse.model;
+package io.neocdtv.modelling.reverse.model.custom;
 
 /**
  * @author xix

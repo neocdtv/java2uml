@@ -1,19 +1,19 @@
 package io.neocdtv.modelling.reverse.serialization;
 
-import io.neocdtv.modelling.reverse.model.Classifier;
-import io.neocdtv.modelling.reverse.model.Attribute;
-import io.neocdtv.modelling.reverse.model.Clazz;
-import io.neocdtv.modelling.reverse.model.Enumeration;
-import io.neocdtv.modelling.reverse.model.Model;
-import io.neocdtv.modelling.reverse.model.Relation;
-import io.neocdtv.modelling.reverse.model.RelationType;
-import io.neocdtv.modelling.reverse.model.Visibility;
-import io.neocdtv.modelling.reverse.model.Package;
+import io.neocdtv.modelling.reverse.model.custom.Classifier;
+import io.neocdtv.modelling.reverse.model.custom.Attribute;
+import io.neocdtv.modelling.reverse.model.custom.Clazz;
+import io.neocdtv.modelling.reverse.model.custom.Enumeration;
+import io.neocdtv.modelling.reverse.model.custom.Model;
+import io.neocdtv.modelling.reverse.model.custom.Relation;
+import io.neocdtv.modelling.reverse.model.custom.RelationType;
+import io.neocdtv.modelling.reverse.model.custom.Visibility;
+import io.neocdtv.modelling.reverse.model.custom.Package;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class DotModelSerializer implements ModelSerializer {
+public class DotCustomModelSerializer implements ModelSerializer {
 
 	private final boolean doPackages = false;
 	private final boolean doConstants = false;

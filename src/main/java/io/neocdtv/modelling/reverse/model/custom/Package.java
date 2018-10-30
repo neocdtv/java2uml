@@ -1,4 +1,4 @@
-package io.neocdtv.modelling.reverse.model;
+package io.neocdtv.modelling.reverse.model.custom;
 
 import java.util.HashSet;
 import java.util.Objects;

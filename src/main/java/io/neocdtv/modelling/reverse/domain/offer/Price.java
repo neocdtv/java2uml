@@ -5,12 +5,9 @@
  */
 package io.neocdtv.modelling.reverse.domain.offer;
 
-import javax.persistence.Entity;
-
 /**
  * @author xix
  */
-@Entity
 public class Price {
 
 }

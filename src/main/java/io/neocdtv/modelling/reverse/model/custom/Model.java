@@ -1,4 +1,4 @@
-package io.neocdtv.modelling.reverse.model;
+package io.neocdtv.modelling.reverse.model.custom;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -8,10 +8,6 @@ import java.util.Set;
  */
 public class Model {
 	private Set<Package> packages = new HashSet<>();
-
-	public void addPackage(final Package packageToAdd) {
-		packages.add(packageToAdd);
-	}
 
 	public Package getPackage(final String packageToGet) {
 		for (Package subGraph : packages) {

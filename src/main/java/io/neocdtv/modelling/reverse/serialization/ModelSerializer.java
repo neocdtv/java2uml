@@ -1,6 +1,6 @@
 package io.neocdtv.modelling.reverse.serialization;
 
-import io.neocdtv.modelling.reverse.model.Model;
+import io.neocdtv.modelling.reverse.model.custom.Model;
 
 /**
  * @author xix

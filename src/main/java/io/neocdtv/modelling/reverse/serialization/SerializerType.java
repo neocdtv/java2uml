@@ -5,6 +5,7 @@ package io.neocdtv.modelling.reverse.serialization;
  */
 public enum SerializerType {
 	DOT("dot"),
+	DOT_ECORE("dot_ecore"),
 	XML("xmi");
 
 	private String value;

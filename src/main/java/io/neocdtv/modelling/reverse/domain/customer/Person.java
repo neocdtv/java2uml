@@ -7,12 +7,9 @@ package io.neocdtv.modelling.reverse.domain.customer;
 
 import io.neocdtv.modelling.reverse.domain.customer.address.Address;
 
-import javax.persistence.Entity;
-
 /**
  * @author xix
  */
-@Entity
 public class Person extends Customer implements IPerson {
 	private String firstName;
 	public String lastName;
