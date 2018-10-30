@@ -11,7 +11,7 @@ build
 ======
         mvn clean install
 
-During the build a sample graphviz dot-file will be generated in target/io.neocdtv.modelling.reverse.domain representing the internal custom model. The easiest way to view it is to go to http://viz-js.com/ and paste its content.
+During the build a sample graphviz dot-file will be generated target/io.neocdtv.modelling.reverse.domain representing a simple test domain model. The easiest way to view it is to go to http://viz-js.com/ and paste its content.
 
 run
 ======
@@ -26,5 +26,5 @@ example:
 
         java -jar target/java2uml.jar -packages=io.neocdtv.modelling.reverse.domain -sourceDir=src/main/java -outputFile=output.dot -r
 
-This will generate a representation of the simple test domain-model. To view it go to http://viz-js.com/ and paste its content.
+This will generate a representation of a simple test domain model. To view it go to http://viz-js.com/ and paste its content.
 
