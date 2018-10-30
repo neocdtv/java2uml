@@ -1,8 +1,10 @@
-# java2uml
-## Motivation
-Build a CLI tool to generate UML from Java Code
+What
+=====
+CLI tool to generate UML from Java Code. There is currently a small bug, which makes it fail on linux.
 
-## Usage
-
+How
+=====
+shell (git bash)
 ======
 mvn clean install
+
