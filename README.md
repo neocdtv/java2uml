@@ -28,3 +28,5 @@ example:
 
 This will generate a representation of a simple test domain model. To view it go to http://viz-js.com/ and paste its content.
 
+![example domain model](https://raw.githubusercontent.com/neocdtv/java2uml/master/example.png)
+
