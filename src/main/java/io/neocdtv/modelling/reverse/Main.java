@@ -48,6 +48,7 @@ public class Main {
 			System.out.println("options:");
 			System.out.println("\t-r\trecursive package scanning");
 			System.out.println("\t-ecore\tuse Ecore internally (alpha)");
+			System.out.println("example: java -jar target/java2uml.jar -packages=io.neocdtv.modelling.reverse.domain -sourceDir=src/main/java -outputFile=output.dot -r");
 			System.exit(1);
 		}
 

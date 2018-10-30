@@ -1,0 +1,126 @@
+digraph G {
+	fontname  = "Courier"
+	fontsize  = 8
+	nodesep=0.9
+	ranksep=0.9
+	splines=polyline
+	overlap=scalexy
+	node [
+		fontname = "Courier"
+		fontsize  = 8
+		shape  = "record"
+	]
+	edge [
+		fontname = "Courier"
+		fontsize  = 8
+	]
+		"io.neocdtv.modelling.reverse.domain.customer.address.AddressType" [
+			label = "{AddressType|PUBLIC\lPRIVATE\l}"
+		]
+		"io.neocdtv.modelling.reverse.domain.customer.address.Address" [
+			label = "{Address|street : int\lcity : int\l}"
+		]
+		"io.neocdtv.modelling.reverse.domain.vehicle.Feature" [
+			label = "{Feature|type : String\l}"
+		]
+		"io.neocdtv.modelling.reverse.domain.vehicle.Car" [
+			label = "{Car|productionDate : Date\lmodelCode : String\l}"
+		]
+		"io.neocdtv.modelling.reverse.domain.offer.Payment" [
+			label = "{Payment|LEASING\lCASH\l}"
+		]
+		"io.neocdtv.modelling.reverse.domain.offer.Offer" [
+			label = "{Offer|anInt : int\laBoolean : boolean\ldate : Date\l}"
+		]
+		"io.neocdtv.modelling.reverse.domain.offer.Price" [
+			label = "{Price|}"
+		]
+		"io.neocdtv.modelling.reverse.domain.offer.Contract" [
+			label = "{Contract|status : String\l}"
+		]
+		"io.neocdtv.modelling.reverse.domain.customer.IPerson" [
+			label = "{IPerson|}"
+		]
+		"io.neocdtv.modelling.reverse.domain.customer.Organization" [
+			label = "{Organization|arrayAddresses : Address[]\lmapAddresses : Map\l}"
+		]
+		"io.neocdtv.modelling.reverse.domain.customer.Salutation" [
+			label = "{Salutation|MR\lMS\lMRS\l}"
+		]
+		"io.neocdtv.modelling.reverse.domain.customer.ICustomer" [
+			label = "{ICustomer|}"
+		]
+		"io.neocdtv.modelling.reverse.domain.customer.Person" [
+			label = "{Person|firstName : String\llastName : String\l}"
+		]
+		"io.neocdtv.modelling.reverse.domain.customer.Customer" [
+			label = "{Customer|attribute : int\l}"
+		]
+	"io.neocdtv.modelling.reverse.domain.customer.address.AddressType" -> "io.neocdtv.modelling.reverse.domain.customer.address.Address" [dir=back, arrowtail=open ,taillabel="addressType"]
+	"io.neocdtv.modelling.reverse.domain.customer.Person" -> "io.neocdtv.modelling.reverse.domain.customer.address.Address" [dir=back, arrowtail=open ,taillabel="person"]
+		"io.neocdtv.modelling.reverse.domain.customer.address.AddressType" [
+			label = "{AddressType|PUBLIC\lPRIVATE\l}"
+		]
+		"io.neocdtv.modelling.reverse.domain.customer.address.Address" [
+			label = "{Address|street : int\lcity : int\l}"
+		]
+	"io.neocdtv.modelling.reverse.domain.vehicle.Feature" -> "io.neocdtv.modelling.reverse.domain.vehicle.Car" [dir=back, arrowtail=open ,taillabel="features 
+0..*"]
+		"io.neocdtv.modelling.reverse.domain.vehicle.Feature" [
+			label = "{Feature|type : String\l}"
+		]
+		"io.neocdtv.modelling.reverse.domain.vehicle.Car" [
+			label = "{Car|productionDate : Date\lmodelCode : String\l}"
+		]
+	"io.neocdtv.modelling.reverse.domain.customer.ICustomer" -> "io.neocdtv.modelling.reverse.domain.offer.Offer" [dir=back, arrowtail=open ,taillabel="keepers 
+0..*"]
+	"io.neocdtv.modelling.reverse.domain.customer.ICustomer" -> "io.neocdtv.modelling.reverse.domain.offer.Offer" [dir=back, arrowtail=open ,taillabel="contactPerson"]
+	"io.neocdtv.modelling.reverse.domain.customer.ICustomer" -> "io.neocdtv.modelling.reverse.domain.offer.Offer" [dir=back, arrowtail=open ,taillabel="conditionProvider"]
+	"io.neocdtv.modelling.reverse.domain.customer.ICustomer" -> "io.neocdtv.modelling.reverse.domain.offer.Offer" [dir=back, arrowtail=open ,taillabel="owner"]
+	"io.neocdtv.modelling.reverse.domain.vehicle.Car" -> "io.neocdtv.modelling.reverse.domain.offer.Offer" [dir=back, arrowtail=open ,taillabel="car"]
+	"io.neocdtv.modelling.reverse.domain.offer.Price" -> "io.neocdtv.modelling.reverse.domain.offer.Offer" [dir=back, arrowtail=open ,taillabel="prices 
+0..*"]
+	"io.neocdtv.modelling.reverse.domain.offer.Payment" -> "io.neocdtv.modelling.reverse.domain.offer.Offer" [dir=back, arrowtail=open ,taillabel="payment"]
+	"io.neocdtv.modelling.reverse.domain.offer.Offer" -> "io.neocdtv.modelling.reverse.domain.offer.Contract" [dir=back, arrowtail=open ,taillabel="offer"]
+		"io.neocdtv.modelling.reverse.domain.offer.Payment" [
+			label = "{Payment|LEASING\lCASH\l}"
+		]
+		"io.neocdtv.modelling.reverse.domain.offer.Offer" [
+			label = "{Offer|anInt : int\laBoolean : boolean\ldate : Date\l}"
+		]
+		"io.neocdtv.modelling.reverse.domain.offer.Price" [
+			label = "{Price|}"
+		]
+		"io.neocdtv.modelling.reverse.domain.offer.Contract" [
+			label = "{Contract|status : String\l}"
+		]
+	"io.neocdtv.modelling.reverse.domain.customer.Customer" -> "io.neocdtv.modelling.reverse.domain.customer.Organization" [dir=back, arrowtail=empty]
+	"io.neocdtv.modelling.reverse.domain.customer.address.Address" -> "io.neocdtv.modelling.reverse.domain.customer.Organization" [dir=back, arrowtail=open ,taillabel="aSetAddresses 
+0..*"]
+	"io.neocdtv.modelling.reverse.domain.customer.address.Address" -> "io.neocdtv.modelling.reverse.domain.customer.Organization" [dir=back, arrowtail=open ,taillabel="aListAddresses 
+0..*"]
+	"io.neocdtv.modelling.reverse.domain.customer.Customer" -> "io.neocdtv.modelling.reverse.domain.customer.Person" [dir=back, arrowtail=empty]
+	"io.neocdtv.modelling.reverse.domain.customer.address.Address" -> "io.neocdtv.modelling.reverse.domain.customer.Person" [dir=back, arrowtail=open ,taillabel="firstAddress"]
+	"io.neocdtv.modelling.reverse.domain.customer.IPerson" -> "io.neocdtv.modelling.reverse.domain.customer.Person" [dir=back, style=dashed, arrowtail=empty]
+	"io.neocdtv.modelling.reverse.domain.customer.address.Address" -> "io.neocdtv.modelling.reverse.domain.customer.Person" [dir=back, arrowtail=open ,taillabel="secondAddress"]
+	"io.neocdtv.modelling.reverse.domain.customer.Salutation" -> "io.neocdtv.modelling.reverse.domain.customer.Person" [dir=back, arrowtail=open ,taillabel="salutation"]
+	"io.neocdtv.modelling.reverse.domain.customer.ICustomer" -> "io.neocdtv.modelling.reverse.domain.customer.Customer" [dir=back, style=dashed, arrowtail=empty]
+		"io.neocdtv.modelling.reverse.domain.customer.IPerson" [
+			label = "{IPerson|}"
+		]
+		"io.neocdtv.modelling.reverse.domain.customer.Organization" [
+			label = "{Organization|arrayAddresses : Address[]\lmapAddresses : Map\l}"
+		]
+		"io.neocdtv.modelling.reverse.domain.customer.Salutation" [
+			label = "{Salutation|MR\lMS\lMRS\l}"
+		]
+		"io.neocdtv.modelling.reverse.domain.customer.ICustomer" [
+			label = "{ICustomer|}"
+		]
+		"io.neocdtv.modelling.reverse.domain.customer.Person" [
+			label = "{Person|firstName : String\llastName : String\l}"
+		]
+		"io.neocdtv.modelling.reverse.domain.customer.Customer" [
+			label = "{Customer|attribute : int\l}"
+		]
+}
