@@ -45,6 +45,8 @@ public class Main {
 
 		if (packages == null || sourceDir == null || outputFile == null) {
 			System.out.println("usage: java -jar target/java2uml.jar -packages=... -sourceDir=... -outputFile=... [-r]");
+			System.out.println("options:");
+			System.out.println("\t-r recursive package scanning");
 			System.exit(1);
 		}
 
