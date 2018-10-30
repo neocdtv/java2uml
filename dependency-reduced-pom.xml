@@ -13,22 +13,6 @@
         <version>1.2.1</version>
         <executions>
           <execution>
-            <id>player-core</id>
-            <phase>test</phase>
-            <goals>
-              <goal>java</goal>
-            </goals>
-            <configuration>
-              <mainClass>io.neocdtv.modelling.reverse.Main</mainClass>
-              <arguments>
-                <argument>-r</argument>
-                <argument>-packages=io.neocdtv.player.core</argument>
-                <argument>-sourceDir=../player-core/src/main/java</argument>
-                <argument>-outputFile=target/io.neocdtv.player.core</argument>
-              </arguments>
-            </configuration>
-          </execution>
-          <execution>
             <id>domain</id>
             <phase>test</phase>
             <goals>
@@ -41,6 +25,23 @@
                 <argument>-packages=io.neocdtv.modelling.reverse.domain</argument>
                 <argument>-sourceDir=src/main/java</argument>
                 <argument>-outputFile=target/io.neocdtv.modelling.reverse.domain</argument>
+              </arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <id>domain-ecore</id>
+            <phase>test</phase>
+            <goals>
+              <goal>java</goal>
+            </goals>
+            <configuration>
+              <mainClass>io.neocdtv.modelling.reverse.Main</mainClass>
+              <arguments>
+                <argument>-r</argument>
+                <argument>-ecore</argument>
+                <argument>-packages=io.neocdtv.modelling.reverse.domain</argument>
+                <argument>-sourceDir=src/main/java</argument>
+                <argument>-outputFile=target/io.neocdtv.modelling.reverse.domain-ecore</argument>
               </arguments>
             </configuration>
           </execution>

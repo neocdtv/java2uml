@@ -1,15 +1,14 @@
 package io.neocdtv.modelling.reverse;
 
 import com.thoughtworks.qdox.JavaProjectBuilder;
-import com.thoughtworks.qdox.model.JavaAnnotation;
 import com.thoughtworks.qdox.model.JavaClass;
 import com.thoughtworks.qdox.model.JavaPackage;
 import io.neocdtv.modelling.reverse.model.custom.Classifier;
 import io.neocdtv.modelling.reverse.model.custom.Model;
 import io.neocdtv.modelling.reverse.model.custom.Package;
 import io.neocdtv.modelling.reverse.model.custom.Relation;
-import io.neocdtv.modelling.reverse.reverse.ModelBuilder;
 import io.neocdtv.modelling.reverse.reverse.ECoreModelBuilder;
+import io.neocdtv.modelling.reverse.reverse.ModelBuilder;
 import io.neocdtv.modelling.reverse.serialization.DotCustomModelSerializer;
 import io.neocdtv.modelling.reverse.serialization.DotECoreModelSerializer;
 import io.neocdtv.modelling.reverse.serialization.ModelSerializer;
@@ -22,7 +21,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
