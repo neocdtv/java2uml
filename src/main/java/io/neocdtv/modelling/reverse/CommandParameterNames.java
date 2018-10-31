@@ -12,7 +12,6 @@ public class CommandParameterNames {
   static final String USE_ECORE = "-ecore";
 
   // TODO:
-  static final String SERIALIZER = "-serializer";
   static final String SERIALIZE_PACKAGES = "-p";
   static final String SERIALIZE_CONSTANTS = "-c";
 

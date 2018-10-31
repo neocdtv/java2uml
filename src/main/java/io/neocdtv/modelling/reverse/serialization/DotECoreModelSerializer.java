@@ -56,14 +56,17 @@ public class DotECoreModelSerializer {
 	}
 
 	private void doRelation(EClassifier eClassifier, final EReference relation, final StringBuilder dot) {
-
 		if (isClassifierPackageAvailable(relation.getEReferenceType())) {
 			dot.append("\t");
 			dot.append("\"").append(relation.getEReferenceType().getInstanceClassName()).append("\"");
 			dot.append(" -> ");
 			dot.append("\"").append(eClassifier.getInstanceClassName()).append("\"");
 
-			doDependency(relation, dot);
+			if (relation.getEType() instanceof EClass && ((EClass) relation.getEType()).isInterface()) {
+				doInterfaceImplementation(dot);
+			} else {
+				doDependency(relation, dot);
+			}
 
 			dot.append("\n");
 		}
@@ -71,15 +74,13 @@ public class DotECoreModelSerializer {
 
 
 	private boolean isClassifierPackageAvailable(final EClassifier eClassifier) {
-		/*
-		for (Classifier current : this.classes) {
-			if (current.getId().equals(eClassifier.getId())) {
+		for (JavaClass qClass : this.qClasses) {
+			if (qClass.getFullyQualifiedName().equals(eClassifier.getInstanceClassName())) {
+
 				return true;
 			}
 		}
 		return false;
-		*/
-		return true;
 	}
 
 	private void configureLayout(StringBuilder dot) {
