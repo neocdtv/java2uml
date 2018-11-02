@@ -38,10 +38,10 @@
               <mainClass>io.neocdtv.modelling.reverse.Main</mainClass>
               <arguments>
                 <argument>-r</argument>
-                <argument>-ecore</argument>
+                <argument>-uml</argument>
                 <argument>-packages=io.neocdtv.modelling.reverse.domain</argument>
                 <argument>-sourceDir=src/main/java</argument>
-                <argument>-outputFile=target/io.neocdtv.modelling.reverse.domain-ecore</argument>
+                <argument>-outputFile=target/io.neocdtv.modelling.reverse.domain-uml</argument>
               </arguments>
             </configuration>
           </execution>
@@ -82,6 +82,12 @@
       </plugin>
     </plugins>
   </build>
+  <repositories>
+    <repository>
+      <id>eclipse</id>
+      <url>https://repo.eclipse.org/content/repositories/releases/</url>
+    </repository>
+  </repositories>
   <properties>
     <shade.version>3.1.0</shade.version>
     <name>java2uml</name>
