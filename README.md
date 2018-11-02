@@ -17,10 +17,10 @@ run
 ======
 The build will generate a jar, which can be used like:
 
-        java -jar target/java2uml.jar -packages=... -sourceDir=... -outputFile=... [-r] [-ecore]
+        java -jar target/java2uml.jar -packages=... -sourceDir=... -outputFile=... [-r] [-uml]
         options:
                 -r      recursive package scanning 
-                -ecore  use Ecore internally (alpha)
+                -uml    use Eclipse Uml2 internally (alpha)
                 
 example:
 
