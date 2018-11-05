@@ -1,6 +1,8 @@
 What
 =====
-CLI tool to generate UML from Java Code.
+CLI tool to generate UML from Java Code. 
+Input is java source code.
+Output format is graphviz dot.
 
 !WORK IN PROGRESS!
 
