@@ -7,11 +7,14 @@ import io.neocdtv.modelling.reverse.model.custom.Classifier;
 import io.neocdtv.modelling.reverse.model.custom.Model;
 import io.neocdtv.modelling.reverse.model.custom.Package;
 import io.neocdtv.modelling.reverse.model.custom.Relation;
+import io.neocdtv.modelling.reverse.reverse.ECoreModelBuilder;
 import io.neocdtv.modelling.reverse.reverse.ModelBuilder;
 import io.neocdtv.modelling.reverse.reverse.UmlModelBuilder;
 import io.neocdtv.modelling.reverse.serialization.DotCustomModelSerializer;
+import io.neocdtv.modelling.reverse.serialization.DotECoreModelSerializer;
 import io.neocdtv.modelling.reverse.serialization.DotUmlModelSerializer;
 import io.neocdtv.modelling.reverse.serialization.ModelSerializer;
+import org.eclipse.emf.ecore.EPackage;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -43,10 +46,11 @@ public class Main {
     final String outputFile = CliUtil.findCommandArgumentByName(CommandParameterNames.OUTPUT_FILE, args);
 
     if (packages == null || sourceDir == null || outputFile == null) {
-      System.out.println("usage: java -jar target/java2uml.jar -packages=... -sourceDir=... -outputFile=... [-r] [-ecore]");
+      System.out.println("usage: java -jar target/java2uml.jar -packages=... -sourceDir=... -outputFile=... [-r] [-ecore|-uml] ");
       System.out.println("options:");
       System.out.println("\t-r\trecursive package scanning");
       System.out.println("\t-uml\tuse Eclipse Uml2 internally (alpha)");
+      System.out.println("\t-ecore\tuse Eclipse Ecore internally (alpha)");
       System.out.println("example: java -jar target/java2uml.jar -packages=io.neocdtv.modelling.reverse.domain -sourceDir=src/main/java -outputFile=output.dot -r");
       System.exit(1);
     }
@@ -56,15 +60,22 @@ public class Main {
 
     if (CliUtil.isCommandArgumentPresent(CommandParameterNames.USE_ECLIPSE_UML, args)) {
       generateUsingUmlModel(outputFile, builder.getPackages(), builder.getClasses());
-
+    } else if (CliUtil.isCommandArgumentPresent(CommandParameterNames.USE_ECLIPSE_ECORE, args)) {
+      generateUsingECoreModel(outputFile, builder.getPackages(), builder.getClasses());
     } else {
       generateUsingCustomModel(outputFile, builder.getClasses());
+
     }
   }
 
   private static void generateUsingUmlModel(String outputFile, java.util.Collection<JavaPackage> packages, java.util.Collection<JavaClass> qClasses) throws java.io.IOException {
     final Set<org.eclipse.uml2.uml.Package> uPackages = UmlModelBuilder.build(packages);
     serializeUml(outputFile, uPackages, qClasses);
+  }
+
+  private static void generateUsingECoreModel(String outputFile, java.util.Collection<JavaPackage> packages, java.util.Collection<JavaClass> qClasses) throws java.io.IOException {
+    final Set<EPackage> ePackages = ECoreModelBuilder.build(packages);
+    serializeECore(outputFile, ePackages, qClasses);
   }
 
 
@@ -147,6 +158,14 @@ public class Main {
   private static void serializeUml(final String argumentOutputFile, final Set<org.eclipse.uml2.uml.Package> uPackages, final Collection<JavaClass> qClasses) throws IOException {
     final DotUmlModelSerializer dotUmlModelSerializer = new DotUmlModelSerializer();
     final String rendererDiagram = dotUmlModelSerializer.start(uPackages, new HashSet<>(qClasses));
+    FileWriter fw = new FileWriter(argumentOutputFile);
+    fw.write(rendererDiagram);
+    fw.flush();
+  }
+
+  private static void serializeECore(final String argumentOutputFile, final Set<EPackage> ePackages, final Collection<JavaClass> qClasses) throws IOException {
+    DotECoreModelSerializer dotECoreModelSerializer = new DotECoreModelSerializer();
+    final String rendererDiagram = dotECoreModelSerializer.start(ePackages, new HashSet<>(qClasses));
     FileWriter fw = new FileWriter(argumentOutputFile);
     fw.write(rendererDiagram);
     fw.flush();

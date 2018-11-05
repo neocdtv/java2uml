@@ -10,6 +10,7 @@ public class CommandParameterNames {
 
   static final String RECURSIVE_PACKAGE_SEARCH = "-r";
   static final String USE_ECLIPSE_UML = "-uml";
+  static final String USE_ECLIPSE_ECORE = "-ecore";
 
   // TODO:
   static final String SERIALIZE_PACKAGES = "-p";
