@@ -1,0 +1,11 @@
+ECORE
+- remove duplication from model
+- check if the model is build correctly
+
+UML
+- remove duplication from model
+- check if the model is build correctly
+
+UML 2 ECORE
+- check the conversion
+
