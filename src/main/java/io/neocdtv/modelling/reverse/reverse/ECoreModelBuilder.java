@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * @author xix
@@ -35,14 +36,14 @@ public class ECoreModelBuilder {
   private final static EcoreFactory ECORE_FACTORY = EcoreFactory.eINSTANCE;
   private final static EcorePackage ECORE_PACKAGE = EcorePackage.eINSTANCE;
 
+  // contains only packages (1) selected but not packages referenced by classes from the selected packages (1)
+  private static Set<EPackage> E_PACKAGES;
+
   public static Set<EPackage> build(final Collection<JavaPackage> qPackages) {
 
-    final Set<EPackage> ePackages = new HashSet<>();
+    E_PACKAGES = new HashSet<>();
     for (JavaPackage qPackage : qPackages) {
-      EPackage ePackage = ECORE_FACTORY.createEPackage();
-      ePackage.setName(qPackage.getName());
-      ePackage.setNsPrefix(buildPrefix(qPackage));
-      ePackage.setNsURI("http://" + qPackage.getName());
+      EPackage ePackage = getOrCreatePackage(qPackage.getName());
 
       final Collection<JavaClass> qClasses = qPackage.getClasses();
       for (JavaClass qClass : qClasses) {
@@ -56,10 +57,27 @@ public class ECoreModelBuilder {
         }
         ePackage.getEClassifiers().add(eClassifier);
       }
-      ePackages.add(ePackage);
+      E_PACKAGES.add(ePackage);
     }
-    return ePackages;
+    return E_PACKAGES;
   }
+
+  // TODO: what about subpackages?!? is some action here required
+  private static EPackage getOrCreatePackage(final String packageName) {
+    Set<EPackage> collectedPackages = E_PACKAGES.stream().filter(ePackage -> ePackage.getName().equals(packageName)).collect(Collectors.toSet());
+    if (collectedPackages.size() > 1) {
+      throw new RuntimeException("multiple packages found in ecore model with name: " + packageName);
+    } else if (collectedPackages.size() == 1) {
+      return collectedPackages.iterator().next();
+    } else {
+      EPackage ePackage = ECORE_FACTORY.createEPackage();
+      ePackage.setName(packageName);
+      ePackage.setNsPrefix(buildPrefix(packageName));
+      ePackage.setNsURI("http://" + packageName);
+      return ePackage;
+    }
+  }
+
 
   private static void buildRelations(final EClass eClass, final JavaClass qClass) {
     final List<JavaClass> implementedInterfaces = qClass.getInterfaces();
@@ -67,7 +85,7 @@ public class ECoreModelBuilder {
     buildInterfaceImplementation(implementedInterfaces, eClass);
     buildSuperClass(eClass, qClass);
     buildDependencies(eClass, qClass);
-    // TODO: buildUsages(clazz, fromNode);
+    // TODO: buildUsages(clazz, fromNode); ?!?
   }
 
   private static void buildSuperClass(final EClass eClass, final JavaClass qClass) {
@@ -172,8 +190,8 @@ public class ECoreModelBuilder {
     return eEnum;
   }
 
-  private static String buildPrefix(JavaPackage qPackage) {
-    final String[] split = qPackage.getName().split("\\.");
+  private static String buildPrefix(final String packageName) {
+    final String[] split = packageName.split("\\.");
     return split[split.length - 1];
   }
 
