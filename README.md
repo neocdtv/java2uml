@@ -21,9 +21,9 @@ The build will generate a jar, which can be used like:
 
         java -jar target/java2uml.jar -packages=... -sourceDir=... -outputFile=... [-r] [-ecore|-uml]
         options:
-                -r      recursive package scanning 
-                -uml    use Eclipse Uml2 internally (alpha)
-                -ecore	use Eclipse Ecore internally (alpha)
+                -r              recursive package scanning 
+                -uml            use Eclipse Uml2 internally (alpha)
+                -ecore          use Eclipse Ecore internally (alpha)
                 
 example:
 
