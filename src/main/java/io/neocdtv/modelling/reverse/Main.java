@@ -3,17 +3,10 @@ package io.neocdtv.modelling.reverse;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.model.JavaClass;
 import com.thoughtworks.qdox.model.JavaPackage;
-import io.neocdtv.modelling.reverse.model.custom.Classifier;
-import io.neocdtv.modelling.reverse.model.custom.Model;
-import io.neocdtv.modelling.reverse.model.custom.Package;
-import io.neocdtv.modelling.reverse.model.custom.Relation;
 import io.neocdtv.modelling.reverse.reverse.ECoreModelBuilder;
-import io.neocdtv.modelling.reverse.reverse.ModelBuilder;
 import io.neocdtv.modelling.reverse.reverse.UmlModelBuilder;
-import io.neocdtv.modelling.reverse.serialization.DotCustomModelSerializer;
 import io.neocdtv.modelling.reverse.serialization.DotECoreModelSerializer;
 import io.neocdtv.modelling.reverse.serialization.DotUmlModelSerializer;
-import io.neocdtv.modelling.reverse.serialization.ModelSerializer;
 import org.eclipse.emf.ecore.EPackage;
 
 import java.io.File;
@@ -22,11 +15,9 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 /**
  * @author xix
@@ -46,11 +37,10 @@ public class Main {
     final String outputFile = CliUtil.findCommandArgumentByName(CommandParameterNames.OUTPUT_FILE, args);
 
     if (packages == null || sourceDir == null || outputFile == null) {
-      System.out.println("usage: java -jar target/java2uml.jar -packages=... -sourceDir=... -outputFile=... [-r] [-ecore|-uml] ");
+      System.out.println("usage: java -jar target/java2uml.jar -packages=... -sourceDir=... -outputFile=... [-r] [-uml] ");
       System.out.println("options:");
       System.out.println("\t-r\trecursive package scanning");
-      System.out.println("\t-uml\tuse Eclipse Uml2 internally (alpha)");
-      System.out.println("\t-ecore\tuse Eclipse Ecore internally (alpha)");
+      System.out.println("\t-uml\tuse Eclipse Uml2 internally instead of Eclipse Ecore(alpha)");
       System.out.println("example: java -jar target/java2uml.jar -packages=io.neocdtv.modelling.reverse.domain -sourceDir=src/main/java -outputFile=output.dot -r");
       System.exit(1);
     }
@@ -60,11 +50,8 @@ public class Main {
 
     if (CliUtil.isCommandArgumentPresent(CommandParameterNames.USE_ECLIPSE_UML, args)) {
       generateUsingUmlModel(outputFile, builder.getPackages(), builder.getClasses());
-    } else if (CliUtil.isCommandArgumentPresent(CommandParameterNames.USE_ECLIPSE_ECORE, args)) {
-      generateUsingECoreModel(outputFile, builder.getPackages(), builder.getClasses());
     } else {
-      generateUsingCustomModel(outputFile, builder.getClasses());
-
+      generateUsingECoreModel(outputFile, builder.getPackages(), builder.getClasses());
     }
   }
 
@@ -76,55 +63,6 @@ public class Main {
   private static void generateUsingECoreModel(String outputFile, java.util.Collection<JavaPackage> packages, java.util.Collection<JavaClass> qClasses) throws java.io.IOException {
     final Set<EPackage> ePackages = ECoreModelBuilder.build(packages);
     serializeECore(outputFile, ePackages, qClasses);
-  }
-
-
-  private static void generateUsingCustomModel(final String outputFile, final Collection<JavaClass> classes) throws IOException {
-    Model model = ModelBuilder.build(classes);
-
-    // remove class w/o relation of type dependency to and from
-    removeClassifiersWithOutDependenciesToAndFromIncludedPackages(model);
-    serialize(outputFile, model);
-  }
-
-  // COMMENT: this is an ugly one method
-  // TODO: This method removes lonely classfiers, but this should be changes to render clusters of connected classes
-  private static void removeClassifiersWithOutDependenciesToAndFromIncludedPackages(Model model) {
-    for (Package aPackage : model.getPackages()) {
-      final Iterator<Classifier> iterator = aPackage.getClassifiers().iterator();
-      while (iterator.hasNext()) {
-        final Classifier classifierToCheck = iterator.next();
-        final String classfierId = classifierToCheck.getId();
-        if (classifierToCheck.getRelations().isEmpty() || hasOnlyRelationsToNotIncludedPackages(classifierToCheck, model.getPackages())) {
-          boolean shouldBeRemoved = true;
-          for (Package aPackage1 : model.getPackages()) {
-            for (Classifier classifier : aPackage1.getClassifiers()) {
-              for (Relation relation : classifier.getRelations()) {
-                if (relation.getToNode().getId().equals(classfierId)) {
-                  shouldBeRemoved = false;
-                }
-              }
-            }
-          }
-          if (shouldBeRemoved) {
-            LOGGER.info("REMOVING " + classfierId);
-            iterator.remove();
-          }
-        }
-      }
-    }
-  }
-
-  private static boolean hasOnlyRelationsToNotIncludedPackages(Classifier classifier, Set<Package> packages) {
-    boolean hasOnlyRelationsToNotIncludedPackages = true;
-    final Set<String> includedPackages = packages.stream().map(aPackage -> aPackage.getName()).collect(Collectors.toSet());
-
-    for (Relation relation : classifier.getRelations()) {
-      if (includedPackages.contains(relation.getToNode().getPackageName())) {
-        hasOnlyRelationsToNotIncludedPackages = false;
-      }
-    }
-    return hasOnlyRelationsToNotIncludedPackages;
   }
 
   private static JavaProjectBuilder configureSourceFilesForAnalysis(String argumentPackages, String argumentSourceDir, boolean recursiveSearch) {
@@ -166,14 +104,6 @@ public class Main {
   private static void serializeECore(final String argumentOutputFile, final Set<EPackage> ePackages, final Collection<JavaClass> qClasses) throws IOException {
     DotECoreModelSerializer dotECoreModelSerializer = new DotECoreModelSerializer();
     final String rendererDiagram = dotECoreModelSerializer.start(ePackages, new HashSet<>(qClasses));
-    FileWriter fw = new FileWriter(argumentOutputFile);
-    fw.write(rendererDiagram);
-    fw.flush();
-  }
-
-  private static void serialize(String argumentOutputFile, Model model) throws IOException {
-    final ModelSerializer modelSerializer = new DotCustomModelSerializer();
-    final String rendererDiagram = modelSerializer.start(model);
     FileWriter fw = new FileWriter(argumentOutputFile);
     fw.write(rendererDiagram);
     fw.flush();

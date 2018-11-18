@@ -1,11 +1,11 @@
 package io.neocdtv.modelling.reverse.serialization;
 
 import com.thoughtworks.qdox.model.JavaClass;
-import io.neocdtv.modelling.reverse.model.custom.Classifier;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.uml2.uml.Class;
+import org.eclipse.uml2.uml.Classifier;
 import org.eclipse.uml2.uml.Enumeration;
 import org.eclipse.uml2.uml.Interface;
 import org.eclipse.uml2.uml.InterfaceRealization;
