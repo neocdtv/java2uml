@@ -23,7 +23,6 @@ The build will generate a jar, which can be used like:
         options:
                 -r              recursive package scanning 
                 -uml            use Eclipse Uml2 internally (alpha)
-                -ecore          use Eclipse Ecore internally (alpha)
                 
 example:
 
