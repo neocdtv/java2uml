@@ -9,16 +9,19 @@ import org.eclipse.emf.ecore.EEnumLiteral;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.EStructuralFeature;
-import org.eclipse.uml2.uml.Classifier;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class DotECoreModelSerializer {
 
-  private final boolean doPackages = false;
-  private final boolean doConstants = false;
+  private static final Logger LOGGER = Logger.getLogger(DotECoreModelSerializer.class.getName());
+
+  private final boolean renderPackages = false;
+  private final boolean renderConstants = false;
+  private final boolean linkToPackage = false;
   private Set<JavaClass> qClasses = new HashSet<>();
 
   public String start(final Set<EPackage> ePackages, final Set<JavaClass> qClasses) {
@@ -105,11 +108,10 @@ public class DotECoreModelSerializer {
     }
   }
 
-
   private boolean isClassifierPackageAvailable(final EClassifier eClassifier) {
     for (JavaClass qClass : this.qClasses) {
+      LOGGER.finest("isClassifierPackageAvailable, qClass: " + qClass.getFullyQualifiedName() + ", eClassifier: " + eClassifier.getInstanceClassName());
       if (qClass.getFullyQualifiedName().equals(eClassifier.getInstanceClassName())) {
-
         return true;
       }
     }
@@ -136,7 +138,7 @@ public class DotECoreModelSerializer {
   }
 
   private void doPackageWithClassifiers(final StringBuilder dot, final EPackage ePackage) {
-    if (doPackages) {
+    if (renderPackages) {
       // TODO: how to render package in dot, can subraphs be configured with shape like nodes and edges?
       dot.append("\t");
       dot.append("subgraph ");
@@ -152,7 +154,7 @@ public class DotECoreModelSerializer {
         doEnumeration(dot, (EEnum) eClassifier);
       }
     });
-    if (doPackages) {
+    if (renderPackages) {
       dot.append("\t}\n");
     }
   }
@@ -169,17 +171,14 @@ public class DotECoreModelSerializer {
     for (EStructuralFeature eStructuralFeature : eClass.getEStructuralFeatures()) {
       if (eStructuralFeature instanceof EAttribute) {
         doAttribute(dot, (EAttribute) eStructuralFeature);
+      } else if (eStructuralFeature instanceof EReference && !isClassifierPackageAvailable(((EReference)eStructuralFeature).getEReferenceType())) {
+        // TODO: why are Enums working???
+        doClassifierAsAttribute(dot, ((EReference)eStructuralFeature).getEReferenceType(), eStructuralFeature.getName());
+      } else {
+        LOGGER.warning("omited structural feature " + eStructuralFeature.getName());
       }
     }
 
-		/*
-    node.getRelations().stream().filter(relation -> relation.getRelationType().equals(RelationType.DEPEDENCY)).forEach(relation -> {
-			final Classifier toNode = relation.getToNode();
-			if (!isClassifierPackageAvailable(toNode) && (!relation.isToNodeLabelConstant() || doConstants)) {
-				doClassifierAsAttribute(dot, toNode, relation.getToNodeLabel(), relation.getToNodeVisibility());
-			}
-		});
-		*/
     //dot.append("|"); - methods
     dot.append("}\"\n\t\t]\n");
   }
@@ -201,20 +200,32 @@ public class DotECoreModelSerializer {
   }
 
   private void doAttribute(StringBuilder dot, EAttribute eAttribute) {
-    //dot.append(doVisibility(attribute.getVisibility()));
-    //dot.append(" ");
+    LOGGER.finest("doAttribute, name: " + eAttribute.getName() + ", type: " + eAttribute.getEAttributeType().getName());
     dot.append(eAttribute.getName());
     dot.append(" : ");
     dot.append(eAttribute.getEAttributeType().getName());
     dot.append("\\l");
   }
 
-  private void doClassifierAsAttribute(final StringBuilder dot, final Classifier classifier, final String name) {
-    dot.append(name);
-    dot.append(" : ");
-    dot.append(classifier.getLabel());
-    dot.append("\\l");
+  private void doClassifierAsAttribute(final StringBuilder dot, final EClassifier eClassifier, final String attributeName) {
+    LOGGER.finest("doClassifierAsAttribute, name: " + attributeName + ", type: " + eClassifier.getName());
+    if (linkToPackage) {
+      PackageLink packageLink = new PackageLink();
+      packageLink.setName(attributeName);
+      // NullPointerException, not every eClassifier has a valid package?!?
+      //packageLink.setPackageName(eClassifier.getEPackage().getName());
+      packageLink.setType(eClassifier.getName());
+      // TODO: serialize packageLink to json and use instead of hardcoded: dot.append(packageLink.getMarker());
+      dot.append(packageLink.getMarker());
+      dot.append("\\l");
+    } else {
+      dot.append(attributeName);
+      dot.append(" : ");
+      dot.append(eClassifier.getName());
+      dot.append("\\l");
+    }
   }
+
 
   private void doInterfaceImplementation(StringBuilder dot) {
     dot.append(" [dir=back, style=dashed, arrowtail=empty]");
