@@ -46,4 +46,15 @@ public class PackageLink {
   public void setUpperBound(String upperBound) {
     this.upperBound = upperBound;
   }
+
+  @Override
+  public String toString() {
+    return "[" +
+        "'marker=" + marker + "'" +
+        ",'name=" + name + "'" +
+        ", 'type=" + type + "'" +
+        ", 'packageName=" + packageName + "'" +
+        ", 'upperBound=" + upperBound + "'" +
+        "]";
+  }
 }

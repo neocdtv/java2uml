@@ -24,6 +24,7 @@ public class DotECoreModelSerializer {
   private final boolean linkToPackage = false;
   private Set<JavaClass> qClasses = new HashSet<>();
 
+
   public String start(final Set<EPackage> ePackages, final Set<JavaClass> qClasses) {
     // COMMENT: qClasses are selected to be rendered
     this.qClasses = qClasses;
@@ -216,7 +217,7 @@ public class DotECoreModelSerializer {
       //packageLink.setPackageName(eClassifier.getEPackage().getName());
       packageLink.setType(eClassifier.getName());
       // TODO: serialize packageLink to json and use instead of hardcoded: dot.append(packageLink.getMarker());
-      dot.append(packageLink.getMarker());
+      dot.append(packageLink);
       dot.append("\\l");
     } else {
       dot.append(attributeName);
