@@ -54,7 +54,7 @@ public class ECoreModelBuilder {
           eClassifier = buildEEnum(qClass);
         } else {
           eClassifier = buildEClass(qClass);
-          buildRelations((EClass) eClassifier, qClass);
+          buildGeneralizationRelations((EClass) eClassifier, qClass);
         }
         ePackage.getEClassifiers().add(eClassifier);
       }
@@ -63,7 +63,7 @@ public class ECoreModelBuilder {
     return E_PACKAGES;
   }
 
-  // TODO: what about subpackages?!? is some action here required
+  // TODO: what about subpackages?!?
   private static EPackage getOrCreatePackage(final String packageName) {
     Set<EPackage> collectedPackages = E_PACKAGES.stream().filter(ePackage -> ePackage.getName().equals(packageName)).collect(Collectors.toSet());
     if (collectedPackages.size() > 1) {
@@ -79,7 +79,7 @@ public class ECoreModelBuilder {
     }
   }
 
-  private static void buildRelations(final EClass eClass, final JavaClass qClass) {
+  private static void buildGeneralizationRelations(final EClass eClass, final JavaClass qClass) {
     final List<JavaClass> implementedInterfaces = qClass.getInterfaces();
     buildInterfaceImplementation(implementedInterfaces, eClass);
     buildSuperClass(eClass, qClass);
@@ -141,24 +141,23 @@ public class ECoreModelBuilder {
       LOGGER.info("working on dependency from class: " + eClass.getName() + " and field " + field.getName());
       if (fieldType != null) { // TODO: understand why this can happen
         EClass referenced;
-        // TODO: handle array
         // TODO: handle maps; maps in uml?
-        // TODO: handle EClass/EEnum
+        // TODO: handle EEnum
         try {
           if (fieldType.isArray()) {
-            referenced = build(fieldType.getComponentType());
+            referenced = buildForVisibleAndInvisibleTypes(fieldType.getComponentType());
             eReference.setContainment(true);
             eReference.setLowerBound(0);
             eReference.setUpperBound(EStructuralFeature.UNBOUNDED_MULTIPLICITY);
           } else if (fieldType.isA(Collection.class.getName())) {
             final List<JavaType> actualTypeArguments = ((DefaultJavaParameterizedType) fieldType).getActualTypeArguments();
             final DefaultJavaType genericTypeVariable = (DefaultJavaType) actualTypeArguments.get(0);
-            referenced = build(genericTypeVariable);
+            referenced = buildForVisibleAndInvisibleTypes(genericTypeVariable);
             eReference.setContainment(true);
             eReference.setLowerBound(0);
             eReference.setUpperBound(EStructuralFeature.UNBOUNDED_MULTIPLICITY);
           } else {
-            referenced = build(fieldType);
+            referenced = buildForVisibleAndInvisibleTypes(fieldType);
           }
           eReference.setEType(referenced);
           eClass.getEStructuralFeatures().add(eReference);
@@ -170,7 +169,7 @@ public class ECoreModelBuilder {
     }
   }
 
-  private static EClass build(JavaClass genericTypeVariable) {
+  private static EClass buildForVisibleAndInvisibleTypes(JavaClass genericTypeVariable) {
     EClass referenced;
     if (isTypeVisible(genericTypeVariable)) {
       referenced = buildEClass(genericTypeVariable);
