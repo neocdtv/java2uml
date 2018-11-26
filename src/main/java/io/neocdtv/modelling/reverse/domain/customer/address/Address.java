@@ -1,14 +1,11 @@
 package io.neocdtv.modelling.reverse.domain.customer.address;
 
-import io.neocdtv.modelling.reverse.domain.customer.Person;
-
 /**
  * @author xix
  */
 public class Address extends Object {
   private int street;
   private int city;
-  private Person person;
   private AddressType addressType;
 
   public int getStreet() {
@@ -25,14 +22,6 @@ public class Address extends Object {
 
   public void setCity(int city) {
     this.city = city;
-  }
-
-  public Person getPerson() {
-    return person;
-  }
-
-  public void setPerson(Person person) {
-    this.person = person;
   }
 
   public AddressType getAddressType() {
