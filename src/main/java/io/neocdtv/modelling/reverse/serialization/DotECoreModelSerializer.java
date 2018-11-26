@@ -110,6 +110,7 @@ public class DotECoreModelSerializer {
   }
 
   private boolean isClassifierPackageAvailable(final EClassifier eClassifier) {
+    LOGGER.info("eClassifier " + eClassifier);
     for (JavaClass qClass : this.qClasses) {
       LOGGER.finest("isClassifierPackageAvailable, qClass: " + qClass.getFullyQualifiedName() + ", eClassifier: " + eClassifier.getInstanceClassName());
       if (qClass.getFullyQualifiedName().equals(eClassifier.getInstanceClassName())) {
@@ -147,7 +148,7 @@ public class DotECoreModelSerializer {
       dot.append(" {\n");
       dot.append("\t\t" + "label = \"").append(ePackage.getNsPrefix()).append("\"\n");
     }
-
+    LOGGER.info("ePackage: " + ePackage.getName());
     ePackage.getEClassifiers().forEach(eClassifier -> {
       if (eClassifier instanceof EClass) {
         doClass(dot, (EClass) eClassifier);
@@ -161,6 +162,7 @@ public class DotECoreModelSerializer {
   }
 
   private void doClass(final StringBuilder dot, final EClass eClass) {
+    LOGGER.info("eClass: " + eClass.getName());
     dot.append("\t\t");
     dot.append("\"").append(eClass.getInstanceClassName()).append("\"");
     dot.append(" [\n");
@@ -170,9 +172,10 @@ public class DotECoreModelSerializer {
     dot.append("|");
 
     for (EStructuralFeature eStructuralFeature : eClass.getEStructuralFeatures()) {
+      LOGGER.info("eStructuralFeature: " + eStructuralFeature.getName());
       if (eStructuralFeature instanceof EAttribute) {
         doAttribute(dot, (EAttribute) eStructuralFeature);
-      } else if (eStructuralFeature instanceof EReference && !isClassifierPackageAvailable(((EReference)eStructuralFeature).getEReferenceType())) {
+      } else if (isTypeInvisible(eStructuralFeature)) {
         // TODO: why are Enums working???
         doClassifierAsAttribute(dot, ((EReference)eStructuralFeature).getEReferenceType(), eStructuralFeature.getName());
       } else {
@@ -184,7 +187,21 @@ public class DotECoreModelSerializer {
     dot.append("}\"\n\t\t]\n");
   }
 
+  private boolean isTypeInvisible(EStructuralFeature eStructuralFeature) {
+    LOGGER.info("eStructuralFeature: " + eStructuralFeature);
+    boolean isEReference = eStructuralFeature instanceof EReference;
+    if (isEReference) {
+      EClass eReferenceType = ((EReference) eStructuralFeature).getEReferenceType();
+      LOGGER.info("eReferenceType: " + eReferenceType);
+      if (!isClassifierPackageAvailable(eReferenceType)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private void doEnumeration(final StringBuilder dot, final EEnum eEnum) {
+    LOGGER.info("doEnumeration: " + eEnum.getName());
     dot.append("\t\t");
     dot.append("\"").append(eEnum.getInstanceClassName()).append("\"");
     dot.append(" [\n");

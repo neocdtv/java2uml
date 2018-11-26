@@ -36,15 +36,17 @@ public class ECoreModelBuilder {
   private final static EcoreFactory ECORE_FACTORY = EcoreFactory.eINSTANCE;
   private final static EcorePackage ECORE_PACKAGE = EcorePackage.eINSTANCE;
 
-  // contains only packages (1) selected but not packages referenced by classes from the selected packages (1)
+  // contains only packages (1) selected but not packages referenced by classes from the selected packages (1) - TODO: should at the end contain all packages
   private static Set<EPackage> E_PACKAGES;
+  private static Set<String> VISIBLE_PACKAGES;
 
   public static Set<EPackage> build(final Collection<JavaPackage> qPackages) {
+
+    VISIBLE_PACKAGES = qPackages.stream().map(javaPackage -> javaPackage.getName()).collect(Collectors.toSet());
 
     E_PACKAGES = new HashSet<>();
     for (JavaPackage qPackage : qPackages) {
       EPackage ePackage = getOrCreatePackage(qPackage.getName());
-
       final Collection<JavaClass> qClasses = qPackage.getClasses();
       for (JavaClass qClass : qClasses) {
         EClassifier eClassifier;
@@ -53,7 +55,6 @@ public class ECoreModelBuilder {
         } else {
           eClassifier = buildEClass(qClass);
           buildRelations((EClass) eClassifier, qClass);
-
         }
         ePackage.getEClassifiers().add(eClassifier);
       }
@@ -78,14 +79,10 @@ public class ECoreModelBuilder {
     }
   }
 
-
   private static void buildRelations(final EClass eClass, final JavaClass qClass) {
     final List<JavaClass> implementedInterfaces = qClass.getInterfaces();
-
     buildInterfaceImplementation(implementedInterfaces, eClass);
     buildSuperClass(eClass, qClass);
-    buildDependencies(eClass, qClass);
-    // TODO: buildUsages(clazz, fromNode); ?!?
   }
 
   private static void buildSuperClass(final EClass eClass, final JavaClass qClass) {
@@ -101,67 +98,94 @@ public class ECoreModelBuilder {
 
   private static void buildInterfaceImplementation(final List<JavaClass> implementedInterfaces, final EClass eClass) {
     for (JavaClass implementedInterface : implementedInterfaces) {
-      if (determineIfInterfaceShouldBeIncluded(implementedInterface)) {
-        final String canonicalName = implementedInterface.getCanonicalName();
-        LOGGER.info("building interface: " + canonicalName + " for: " + eClass.getInstanceClassName());
-        LOGGER.info("building interface realization relation to interface: " + canonicalName + " from: " + eClass.getInstanceClassName());
-        EClass eInterface = buildEClass(implementedInterface);
-        eInterface.setInterface(true);
-        /*
-        final EReference eReference = ECORE_FACTORY.createEReference();
-        eReference.setEType(eInterface);
-        eClass.getEStructuralFeatures().add(eReference);
-        */
-        eClass.getESuperTypes().add(eInterface);
-      }
-    }
-  }
-
-  private static void buildDependencies(final EClass eClass, final JavaClass qClass) {
-    final List<JavaField> fields = qClass.getFields();
-    for (JavaField field : fields) {
-      if (!field.isEnumConstant()) { // COMMENT: omit dependency from enum constants to the same enum
-        final JavaClass fieldType = field.getType();
-        if (!determineIfFieldShouldTreatedAsAnAttribute(fieldType)) {
-          final EReference eReference = ECORE_FACTORY.createEReference();
-          eReference.setName(field.getName());
-
-          EClass referenced;
-          // TODO: handle array
-          // TODO: handle maps; maps in uml?
-          // TODO: handle EClass/EEnum
-          if (fieldType.isA(Collection.class.getName())) {
-            final List<JavaType> actualTypeArguments = ((DefaultJavaParameterizedType) fieldType).getActualTypeArguments();
-            final DefaultJavaType genericTypeVariable = (DefaultJavaType) actualTypeArguments.get(0);
-            referenced = buildEClass(genericTypeVariable);
-            eReference.setContainment(true);
-            eReference.setLowerBound(0);
-            eReference.setUpperBound(EStructuralFeature.UNBOUNDED_MULTIPLICITY);
-          } else {
-            referenced = buildEClass(fieldType);
-          }
-          eReference.setEType(referenced);
-          eClass.getEStructuralFeatures().add(eReference);
-        }
-      }
+      final String canonicalName = implementedInterface.getCanonicalName();
+      LOGGER.info("building interface: " + canonicalName + " for: " + eClass.getInstanceClassName());
+      LOGGER.info("building interface realization relation to interface: " + canonicalName + " from: " + eClass.getInstanceClassName());
+      EClass eInterface = buildEClass(implementedInterface);
+      eInterface.setInterface(true);
+      eClass.getESuperTypes().add(eInterface);
     }
   }
 
   private static EClass buildEClass(JavaClass qClass) {
+    final EClass eClass = buildEClassWithoutAttributes(qClass);
+    for (JavaField field : qClass.getFields()) {
+      JavaClass type = field.getType();
+      if (type.isPrimitive()) {
+        buildPrimitiveAttribute(eClass, field);
+      } else {
+        buildDependency(eClass, field);
+      }
+    }
+    return eClass;
+  }
+
+  private static EClass buildEClassWithoutAttributes(JavaClass qClass) {
     final EClass eClass = ECORE_FACTORY.createEClass();
     eClass.setName(qClass.getSimpleName());
     eClass.setInstanceClassName(qClass.getFullyQualifiedName());
-    for (JavaField javaField : qClass.getFields()) {
-      if (determineIfFieldShouldTreatedAsAnAttribute(javaField.getType())) {
-        final EAttribute eAttribute = ECORE_FACTORY.createEAttribute();
-
-        eAttribute.setName(javaField.getName());
-        eAttribute.setEType(mapPrimitiveType(javaField.getType()));
-        eClass.getEStructuralFeatures().add(eAttribute);
-      }
-    }
-
     return eClass;
+  }
+
+  private static boolean isTypeVisible(JavaClass type) {
+    return VISIBLE_PACKAGES.contains(type.getPackageName());
+  }
+
+  private static void buildDependency(EClass eClass, JavaField field) {
+    if (!field.isEnumConstant()) { // COMMENT: omit dependency from enum constants to the same enum
+      final JavaClass fieldType = field.getType();
+      final EReference eReference = ECORE_FACTORY.createEReference();
+      eReference.setName(field.getName());
+
+      // check if eClass is in selected package
+      LOGGER.info("working on dependency from class: " + eClass.getName() + " and field " + field.getName());
+      if (fieldType != null) { // TODO: understand why this can happen
+        EClass referenced;
+        // TODO: handle array
+        // TODO: handle maps; maps in uml?
+        // TODO: handle EClass/EEnum
+        try {
+          if (fieldType.isArray()) {
+            referenced = build(fieldType.getComponentType());
+            eReference.setContainment(true);
+            eReference.setLowerBound(0);
+            eReference.setUpperBound(EStructuralFeature.UNBOUNDED_MULTIPLICITY);
+          } else if (fieldType.isA(Collection.class.getName())) {
+            final List<JavaType> actualTypeArguments = ((DefaultJavaParameterizedType) fieldType).getActualTypeArguments();
+            final DefaultJavaType genericTypeVariable = (DefaultJavaType) actualTypeArguments.get(0);
+            referenced = build(genericTypeVariable);
+            eReference.setContainment(true);
+            eReference.setLowerBound(0);
+            eReference.setUpperBound(EStructuralFeature.UNBOUNDED_MULTIPLICITY);
+          } else {
+            referenced = build(fieldType);
+          }
+          eReference.setEType(referenced);
+          eClass.getEStructuralFeatures().add(eReference);
+        } catch (NullPointerException e) {
+          LOGGER.severe(e.getMessage());
+        }
+      }
+
+    }
+  }
+
+  private static EClass build(JavaClass genericTypeVariable) {
+    EClass referenced;
+    if (isTypeVisible(genericTypeVariable)) {
+      referenced = buildEClass(genericTypeVariable);
+    } else {
+      referenced = buildEClassWithoutAttributes(genericTypeVariable);
+    }
+    return referenced;
+  }
+
+  private static void buildPrimitiveAttribute(EClass eClass, JavaField field) {
+    // TODO: package
+    final EAttribute eAttribute = ECORE_FACTORY.createEAttribute();
+    eAttribute.setName(field.getName());
+    eAttribute.setEType(mapPrimitiveType(field.getType()));
+    eClass.getEStructuralFeatures().add(eAttribute);
   }
 
   private static EDataType mapPrimitiveType(final JavaClass type) {
@@ -172,7 +196,7 @@ public class ECoreModelBuilder {
       return ECORE_PACKAGE.getEInt();
     }
     LOGGER.log(Level.WARNING, "Mapping for primitive type {0} not available, defaulting to EString", name);
-    return ECORE_PACKAGE.getEString();
+    return ECORE_PACKAGE.getEInt();
   }
 
   private static EClassifier buildEEnum(JavaClass qClass) {
@@ -187,20 +211,13 @@ public class ECoreModelBuilder {
       eEnumLiteral.setName(name + "." + enumConstant.getName());
       eEnum.getELiterals().add(eEnumLiteral);
     }
+
     return eEnum;
   }
 
   private static String buildPrefix(final String packageName) {
     final String[] split = packageName.split("\\.");
     return split[split.length - 1];
-  }
-
-  private static boolean determineIfInterfaceShouldBeIncluded(final JavaClass superJavaClass) {
-    return true; // CHECK:		return !isJavaLibraryType(superJavaClass);
-  }
-
-  private static boolean determineIfFieldShouldTreatedAsAnAttribute(JavaClass fieldsType) {
-    return fieldsType.isPrimitive(); // CHECK: || isJavaLibraryType(fieldsType) && !fieldsType.isA(Collection.class.getName());
   }
 
   private static boolean determineIfSuperClassShouldBeIncluded(final JavaClass superJavaClass) {
