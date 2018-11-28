@@ -75,6 +75,7 @@ public class ECoreModelBuilder {
       ePackage.setName(packageName);
       ePackage.setNsPrefix(buildPrefix(packageName));
       ePackage.setNsURI("http://" + packageName);
+      E_PACKAGES.add(ePackage);
       return ePackage;
     }
   }
@@ -124,6 +125,8 @@ public class ECoreModelBuilder {
     final EClass eClass = ECORE_FACTORY.createEClass();
     eClass.setName(qClass.getSimpleName());
     eClass.setInstanceClassName(qClass.getFullyQualifiedName());
+    EPackage aPackage = getOrCreatePackage(qClass.getPackageName());
+    aPackage.getEClassifiers().add(eClass);
     return eClass;
   }
 
@@ -169,18 +172,41 @@ public class ECoreModelBuilder {
     }
   }
 
-  private static EClass buildForVisibleAndInvisibleTypes(JavaClass genericTypeVariable) {
-    EClass referenced;
-    if (isTypeVisible(genericTypeVariable)) {
-      referenced = buildEClass(genericTypeVariable);
+  private static EClass buildForVisibleAndInvisibleTypes(JavaClass javaClass) {
+    EClass referenced = getOrCreateClassifier(javaClass);
+    if (referenced != null) {
+      return referenced;
+    }
+
+    if (isTypeVisible(javaClass)) {
+      referenced = buildEClass(javaClass);
     } else {
-      referenced = buildEClassWithoutAttributes(genericTypeVariable);
+      referenced = buildEClassWithoutAttributes(javaClass);
     }
     return referenced;
   }
 
+  private static EClass getOrCreateClassifier(JavaClass javaClass) {
+    EClass existing = null;
+    EPackage ePackage = getOrCreatePackage(javaClass.getPackageName());
+    Set<EClassifier> collectedClassifiers = ePackage.getEClassifiers()
+        .stream()
+        .filter(eClassifier -> eClassifier.getInstanceClassName().equals(javaClass.getFullyQualifiedName()))
+        .collect(Collectors.toSet());
+    if (collectedClassifiers.size() > 1) {
+      throw new RuntimeException("multiple classes found in ecore model with name: " + javaClass.getFullyQualifiedName());
+    } else if (collectedClassifiers.size() == 1) {
+      // should contain only classes, enums currently not supported
+      LOGGER.info("found existing class: " + javaClass.getFullyQualifiedName());
+      EClassifier next = collectedClassifiers.iterator().next();
+      if (next instanceof EClass) {
+        existing = (EClass)next;
+      }
+    }
+    return existing;
+  }
+
   private static void buildPrimitiveAttribute(EClass eClass, JavaField field) {
-    // TODO: package
     final EAttribute eAttribute = ECORE_FACTORY.createEAttribute();
     eAttribute.setName(field.getName());
     eAttribute.setEType(mapPrimitiveType(field.getType()));

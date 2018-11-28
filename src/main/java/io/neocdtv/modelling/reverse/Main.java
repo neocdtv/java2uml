@@ -51,7 +51,7 @@ public class Main {
     if (CliUtil.isCommandArgumentPresent(CommandParameterNames.USE_ECLIPSE_UML, args)) {
       generateUsingUmlModel(outputFile, builder.getPackages(), builder.getClasses());
     } else {
-      generateUsingECoreModel(outputFile, builder.getPackages(), builder.getClasses());
+      generateUsingECoreModel(outputFile, builder.getPackages());
     }
   }
 
@@ -60,9 +60,9 @@ public class Main {
     serializeUml(outputFile, uPackages, qClasses);
   }
 
-  private static void generateUsingECoreModel(String outputFile, java.util.Collection<JavaPackage> packages, java.util.Collection<JavaClass> qClasses) throws java.io.IOException {
-    final Set<EPackage> ePackages = ECoreModelBuilder.build(packages);
-    serializeECore(outputFile, ePackages, qClasses);
+  private static void generateUsingECoreModel(String outputFile, java.util.Collection<JavaPackage> qPackages) throws java.io.IOException {
+    final Set<EPackage> ePackages = ECoreModelBuilder.build(qPackages);
+    serializeECore(outputFile, ePackages, qPackages);
   }
 
   private static JavaProjectBuilder configureSourceFilesForAnalysis(String argumentPackages, String argumentSourceDir, boolean recursiveSearch) {
@@ -101,9 +101,9 @@ public class Main {
     fw.flush();
   }
 
-  private static void serializeECore(final String argumentOutputFile, final Set<EPackage> ePackages, final Collection<JavaClass> qClasses) throws IOException {
+  private static void serializeECore(final String argumentOutputFile, final Set<EPackage> ePackages, final Collection<JavaPackage> qPackages) throws IOException {
     DotECoreModelSerializer dotECoreModelSerializer = new DotECoreModelSerializer();
-    final String rendererDiagram = dotECoreModelSerializer.start(ePackages, new HashSet<>(qClasses));
+    final String rendererDiagram = dotECoreModelSerializer.start(ePackages, qPackages);
     FileWriter fw = new FileWriter(argumentOutputFile);
     fw.write(rendererDiagram);
     fw.flush();

@@ -1,6 +1,6 @@
 package io.neocdtv.modelling.reverse.serialization;
 
-import com.thoughtworks.qdox.model.JavaClass;
+import com.thoughtworks.qdox.model.JavaPackage;
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EClassifier;
@@ -10,7 +10,7 @@ import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.EStructuralFeature;
 
-import java.util.HashSet;
+import java.util.Collection;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -22,12 +22,11 @@ public class DotECoreModelSerializer {
   private final boolean renderPackages = false;
   private final boolean renderConstants = false;
   private final boolean linkToPackage = false;
-  private Set<JavaClass> qClasses = new HashSet<>();
+  private static Set<String> VISIBLE_PACKAGES;
 
 
-  public String start(final Set<EPackage> ePackages, final Set<JavaClass> qClasses) {
-    // COMMENT: qClasses are selected to be rendered
-    this.qClasses = qClasses;
+  public String start(final Set<EPackage> ePackages, final Collection<JavaPackage> qPackages) {
+    VISIBLE_PACKAGES = qPackages.stream().map(javaPackage -> javaPackage.getName()).collect(Collectors.toSet());
 
     StringBuilder dot = new StringBuilder();
     dot.append("digraph G {\n");
@@ -69,7 +68,7 @@ public class DotECoreModelSerializer {
         .filter(eClass1 -> !eClass1.isInterface())
         .collect(Collectors.toSet())
         .forEach(eClass1 -> {
-          if (isClassifierPackageAvailable(eClass1)) {
+          if (isTypeVisible(eClass1)) {
             dot.append("\t");
             dot.append("\"").append(eClass1.getInstanceClassName()).append("\"");
             dot.append(" -> ");
@@ -87,7 +86,7 @@ public class DotECoreModelSerializer {
         .filter(eClass1 -> eClass1.isInterface())
         .collect(Collectors.toSet())
         .forEach(eClass1 -> {
-          if (isClassifierPackageAvailable(eClass1)) {
+          if (isTypeVisible(eClass1)) {
             dot.append("\t");
             dot.append("\"").append(eClass1.getInstanceClassName()).append("\"");
             dot.append(" -> ");
@@ -99,7 +98,7 @@ public class DotECoreModelSerializer {
   }
 
   private void doDependency(EClass eClassifier, final EReference relation, final StringBuilder dot) {
-    if (isClassifierPackageAvailable(relation.getEReferenceType())) {
+    if (isTypeVisible(relation.getEReferenceType())) {
       dot.append("\t");
       dot.append("\"").append(relation.getEReferenceType().getInstanceClassName()).append("\"");
       dot.append(" -> ");
@@ -109,15 +108,8 @@ public class DotECoreModelSerializer {
     }
   }
 
-  private boolean isClassifierPackageAvailable(final EClassifier eClassifier) {
-    LOGGER.info("eClassifier " + eClassifier);
-    for (JavaClass qClass : this.qClasses) {
-      LOGGER.finest("isClassifierPackageAvailable, qClass: " + qClass.getFullyQualifiedName() + ", eClassifier: " + eClassifier.getInstanceClassName());
-      if (qClass.getFullyQualifiedName().equals(eClassifier.getInstanceClassName())) {
-        return true;
-      }
-    }
-    return false;
+  private boolean isTypeVisible(final EClassifier type) {
+    return VISIBLE_PACKAGES.contains(type.getEPackage().getName());
   }
 
   private void configureLayout(StringBuilder dot) {
@@ -150,10 +142,12 @@ public class DotECoreModelSerializer {
     }
     LOGGER.info("ePackage: " + ePackage.getName());
     ePackage.getEClassifiers().forEach(eClassifier -> {
-      if (eClassifier instanceof EClass) {
-        doClass(dot, (EClass) eClassifier);
-      } else if (eClassifier instanceof EEnum) {
-        doEnumeration(dot, (EEnum) eClassifier);
+      if (isTypeVisible(eClassifier)) {
+        if (eClassifier instanceof EClass) {
+          doClass(dot, (EClass) eClassifier);
+        } else if (eClassifier instanceof EEnum) {
+          doEnumeration(dot, (EEnum) eClassifier);
+        }
       }
     });
     if (renderPackages) {
@@ -175,7 +169,7 @@ public class DotECoreModelSerializer {
       LOGGER.info("eStructuralFeature: " + eStructuralFeature.getName());
       if (eStructuralFeature instanceof EAttribute) {
         doAttribute(dot, (EAttribute) eStructuralFeature);
-      } else if (isTypeInvisible(eStructuralFeature)) {
+      } else if (!isTypeVisible(eStructuralFeature)) {
         // TODO: why are Enums working???
         doClassifierAsAttribute(dot, ((EReference)eStructuralFeature).getEReferenceType(), eStructuralFeature.getName());
       } else {
@@ -187,17 +181,17 @@ public class DotECoreModelSerializer {
     dot.append("}\"\n\t\t]\n");
   }
 
-  private boolean isTypeInvisible(EStructuralFeature eStructuralFeature) {
+  private boolean isTypeVisible(final EStructuralFeature eStructuralFeature) {
     LOGGER.info("eStructuralFeature: " + eStructuralFeature);
     boolean isEReference = eStructuralFeature instanceof EReference;
     if (isEReference) {
       EClass eReferenceType = ((EReference) eStructuralFeature).getEReferenceType();
       LOGGER.info("eReferenceType: " + eReferenceType);
-      if (!isClassifierPackageAvailable(eReferenceType)) {
-        return true;
+      if (!isTypeVisible(eReferenceType)) {
+        return false;
       }
     }
-    return false;
+    return true;
   }
 
   private void doEnumeration(final StringBuilder dot, final EEnum eEnum) {
