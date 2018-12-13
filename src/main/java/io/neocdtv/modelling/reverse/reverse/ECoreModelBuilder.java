@@ -37,34 +37,38 @@ public class ECoreModelBuilder {
   private final static EcorePackage ECORE_PACKAGE = EcorePackage.eINSTANCE;
 
   // contains only packages (1) selected but not packages referenced by classes from the selected packages (1) - TODO: should at the end contain all packages
-  private static Set<EPackage> E_PACKAGES;
-  private static Set<String> VISIBLE_PACKAGES;
+  private Set<EPackage> E_PACKAGES;
+  private Set<String> VISIBLE_PACKAGES;
 
-  public static Set<EPackage> build(final Collection<JavaPackage> qPackages) {
+  public Set<EPackage> build(final Collection<JavaPackage> qPackages) {
 
     VISIBLE_PACKAGES = qPackages.stream().map(javaPackage -> javaPackage.getName()).collect(Collectors.toSet());
 
     E_PACKAGES = new HashSet<>();
     for (JavaPackage qPackage : qPackages) {
-      EPackage ePackage = getOrCreatePackage(qPackage.getName());
       final Collection<JavaClass> qClasses = qPackage.getClasses();
       for (JavaClass qClass : qClasses) {
         EClassifier eClassifier;
         if (qClass.isEnum()) {
-          eClassifier = buildEEnum(qClass);
+          buildEEnum(qClass);
         } else {
-          eClassifier = buildEClass(qClass);
+          eClassifier = buildForVisibleAndInvisibleTypes(qClass);
           buildGeneralizationRelations((EClass) eClassifier, qClass);
         }
-        ePackage.getEClassifiers().add(eClassifier);
+
       }
-      E_PACKAGES.add(ePackage);
     }
     return E_PACKAGES;
   }
 
+  private void addToPackage(final EClassifier eClassifier, final String packageName) {
+    EPackage ePackage = getOrCreatePackage(packageName);
+    ePackage.getEClassifiers().add(eClassifier);
+    E_PACKAGES.add(ePackage);
+  }
+
   // TODO: what about subpackages?!?
-  private static EPackage getOrCreatePackage(final String packageName) {
+  private EPackage getOrCreatePackage(final String packageName) {
     Set<EPackage> collectedPackages = E_PACKAGES.stream().filter(ePackage -> ePackage.getName().equals(packageName)).collect(Collectors.toSet());
     if (collectedPackages.size() > 1) {
       throw new RuntimeException("multiple packages found in ecore model with name: " + packageName);
@@ -80,35 +84,35 @@ public class ECoreModelBuilder {
     }
   }
 
-  private static void buildGeneralizationRelations(final EClass eClass, final JavaClass qClass) {
+  private void buildGeneralizationRelations(final EClass eClass, final JavaClass qClass) {
     final List<JavaClass> implementedInterfaces = qClass.getInterfaces();
     buildInterfaceImplementation(implementedInterfaces, eClass);
     buildSuperClass(eClass, qClass);
   }
 
-  private static void buildSuperClass(final EClass eClass, final JavaClass qClass) {
+  private void buildSuperClass(final EClass eClass, final JavaClass qClass) {
     final JavaClass superQClass = qClass.getSuperJavaClass();
     if (determineIfSuperClassShouldBeIncluded(superQClass)) {
       LOGGER.info("building relation to super class: " + superQClass.getCanonicalName() + " from: " + qClass.getClass().getCanonicalName());
-      EClass superEClass = buildEClass(superQClass);
+      EClass superEClass = buildForVisibleAndInvisibleTypes(superQClass);
       eClass.getESuperTypes().add(superEClass);
     } else {
       LOGGER.info("not building super class: " + superQClass != null ? null : superQClass.getCanonicalName() + " for: " + qClass.getClass().getCanonicalName());
     }
   }
 
-  private static void buildInterfaceImplementation(final List<JavaClass> implementedInterfaces, final EClass eClass) {
+  private void buildInterfaceImplementation(final List<JavaClass> implementedInterfaces, final EClass eClass) {
     for (JavaClass implementedInterface : implementedInterfaces) {
       final String canonicalName = implementedInterface.getCanonicalName();
       LOGGER.info("building interface: " + canonicalName + " for: " + eClass.getInstanceClassName());
       LOGGER.info("building interface realization relation to interface: " + canonicalName + " from: " + eClass.getInstanceClassName());
-      EClass eInterface = buildEClass(implementedInterface);
+      EClass eInterface = buildForVisibleAndInvisibleTypes(implementedInterface);
       eInterface.setInterface(true);
       eClass.getESuperTypes().add(eInterface);
     }
   }
 
-  private static EClass buildEClass(JavaClass qClass) {
+  private EClass buildEClass(JavaClass qClass) {
     final EClass eClass = buildEClassWithoutAttributes(qClass);
     for (JavaField field : qClass.getFields()) {
       JavaClass type = field.getType();
@@ -121,20 +125,19 @@ public class ECoreModelBuilder {
     return eClass;
   }
 
-  private static EClass buildEClassWithoutAttributes(JavaClass qClass) {
+  private EClass buildEClassWithoutAttributes(JavaClass qClass) {
     final EClass eClass = ECORE_FACTORY.createEClass();
     eClass.setName(qClass.getSimpleName());
     eClass.setInstanceClassName(qClass.getFullyQualifiedName());
-    EPackage aPackage = getOrCreatePackage(qClass.getPackageName());
-    aPackage.getEClassifiers().add(eClass);
+    addToPackage(eClass, qClass.getPackageName());
     return eClass;
   }
 
-  private static boolean isTypeVisible(JavaClass type) {
+  private boolean isTypeVisible(JavaClass type) {
     return VISIBLE_PACKAGES.contains(type.getPackageName());
   }
 
-  private static void buildDependency(EClass eClass, JavaField field) {
+  private void buildDependency(EClass eClass, JavaField field) {
     if (!field.isEnumConstant()) { // COMMENT: omit dependency from enum constants to the same enum
       final JavaClass fieldType = field.getType();
       final EReference eReference = ECORE_FACTORY.createEReference();
@@ -142,7 +145,7 @@ public class ECoreModelBuilder {
 
       // check if eClass is in selected package
       LOGGER.info("working on dependency from class: " + eClass.getName() + " and field " + field.getName());
-      if (fieldType != null) { // TODO: understand why this can happen
+      //if (fieldType != null) { // TODO: understand why this can happen
         EClass referenced;
         // TODO: handle maps; maps in uml?
         // TODO: handle EEnum
@@ -167,12 +170,11 @@ public class ECoreModelBuilder {
         } catch (NullPointerException e) {
           LOGGER.severe(e.getMessage());
         }
-      }
-
+      //}
     }
   }
 
-  private static EClass buildForVisibleAndInvisibleTypes(JavaClass javaClass) {
+  private EClass buildForVisibleAndInvisibleTypes(JavaClass javaClass) {
     EClass referenced = getOrCreateClassifier(javaClass);
     if (referenced != null) {
       return referenced;
@@ -186,7 +188,7 @@ public class ECoreModelBuilder {
     return referenced;
   }
 
-  private static EClass getOrCreateClassifier(JavaClass javaClass) {
+  private EClass getOrCreateClassifier(JavaClass javaClass) {
     EClass existing = null;
     EPackage ePackage = getOrCreatePackage(javaClass.getPackageName());
     Set<EClassifier> collectedClassifiers = ePackage.getEClassifiers()
@@ -206,7 +208,8 @@ public class ECoreModelBuilder {
     return existing;
   }
 
-  private static void buildPrimitiveAttribute(EClass eClass, JavaField field) {
+  // TODO: does Attribute needs to be added to E_PACKAGES?
+  private void buildPrimitiveAttribute(EClass eClass, JavaField field) {
     final EAttribute eAttribute = ECORE_FACTORY.createEAttribute();
     eAttribute.setName(field.getName());
     eAttribute.setEType(mapPrimitiveType(field.getType()));
@@ -224,7 +227,9 @@ public class ECoreModelBuilder {
     return ECORE_PACKAGE.getEInt();
   }
 
-  private static EClassifier buildEEnum(JavaClass qClass) {
+  // TODO: why aren't there relations from enum? i.e. generalizations, depedencies?
+  // TODO: maybe just switch to eClass and convert enumConstants to field (constant)?
+  private EClassifier buildEEnum(JavaClass qClass) {
     final EEnum eEnum = ECORE_FACTORY.createEEnum();
     final String name = qClass.getSimpleName();
     eEnum.setName(name);
@@ -237,15 +242,16 @@ public class ECoreModelBuilder {
       eEnum.getELiterals().add(eEnumLiteral);
     }
 
+    addToPackage(eEnum, qClass.getPackageName());
     return eEnum;
   }
 
-  private static String buildPrefix(final String packageName) {
+  private String buildPrefix(final String packageName) {
     final String[] split = packageName.split("\\.");
     return split[split.length - 1];
   }
 
-  private static boolean determineIfSuperClassShouldBeIncluded(final JavaClass superJavaClass) {
+  private boolean determineIfSuperClassShouldBeIncluded(final JavaClass superJavaClass) {
     return superJavaClass != null && !superJavaClass.isPrimitive(); // CHECK: && !isJavaLibraryType(superJavaClass);
   }
 }

@@ -61,7 +61,7 @@ public class Main {
   }
 
   private static void generateUsingECoreModel(String outputFile, java.util.Collection<JavaPackage> qPackages) throws java.io.IOException {
-    final Set<EPackage> ePackages = ECoreModelBuilder.build(qPackages);
+    final Set<EPackage> ePackages = new ECoreModelBuilder().build(qPackages);
     serializeECore(outputFile, ePackages, qPackages);
   }
 
