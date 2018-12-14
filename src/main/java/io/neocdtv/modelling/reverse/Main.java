@@ -3,10 +3,10 @@ package io.neocdtv.modelling.reverse;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.model.JavaClass;
 import com.thoughtworks.qdox.model.JavaPackage;
-import io.neocdtv.modelling.reverse.reverse.ECoreModelBuilder;
-import io.neocdtv.modelling.reverse.reverse.UmlModelBuilder;
-import io.neocdtv.modelling.reverse.serialization.DotECoreModelSerializer;
-import io.neocdtv.modelling.reverse.serialization.DotUmlModelSerializer;
+import io.neocdtv.modelling.reverse.reverse.Java2Ecore;
+import io.neocdtv.modelling.reverse.reverse.Java2Uml;
+import io.neocdtv.modelling.reverse.serialization.Ecore2Dot;
+import io.neocdtv.modelling.reverse.serialization.Uml2Dot;
 import org.eclipse.emf.ecore.EPackage;
 
 import java.io.File;
@@ -33,7 +33,7 @@ public class Main {
     // TODO: multiple sourceDirs?
     final String sourceDir = CliUtil.findCommandArgumentByName(CommandParameterNames.SOURCE_DIR, args);
     // TODO: change file to dir, to write multiple packages
-    // TODO: how to determine name of the files, it can't be the package, cos you can have multiple packages separated by a comma.
+    // TODO: how to determine name of the files, it can't be the package, cos you can have multiple packages separated by a comma. -> build with single package
     final String outputFile = CliUtil.findCommandArgumentByName(CommandParameterNames.OUTPUT_FILE, args);
 
     if (packages == null || sourceDir == null || outputFile == null) {
@@ -56,12 +56,12 @@ public class Main {
   }
 
   private static void generateUsingUmlModel(String outputFile, java.util.Collection<JavaPackage> packages, java.util.Collection<JavaClass> qClasses) throws java.io.IOException {
-    final Set<org.eclipse.uml2.uml.Package> uPackages = UmlModelBuilder.build(packages);
+    final Set<org.eclipse.uml2.uml.Package> uPackages = Java2Uml.toUml(packages);
     serializeUml(outputFile, uPackages, qClasses);
   }
 
   private static void generateUsingECoreModel(String outputFile, java.util.Collection<JavaPackage> qPackages) throws java.io.IOException {
-    final Set<EPackage> ePackages = new ECoreModelBuilder().build(qPackages);
+    final Set<EPackage> ePackages = Java2Ecore.toEcore(qPackages);
     serializeECore(outputFile, ePackages, qPackages);
   }
 
@@ -94,18 +94,16 @@ public class Main {
   }
 
   private static void serializeUml(final String argumentOutputFile, final Set<org.eclipse.uml2.uml.Package> uPackages, final Collection<JavaClass> qClasses) throws IOException {
-    final DotUmlModelSerializer dotUmlModelSerializer = new DotUmlModelSerializer();
-    final String rendererDiagram = dotUmlModelSerializer.start(uPackages, new HashSet<>(qClasses));
+    final String rendererDiagram = Uml2Dot.toDot(uPackages, new HashSet<>(qClasses));
     FileWriter fw = new FileWriter(argumentOutputFile);
     fw.write(rendererDiagram);
     fw.flush();
   }
 
   private static void serializeECore(final String argumentOutputFile, final Set<EPackage> ePackages, final Collection<JavaPackage> qPackages) throws IOException {
-    DotECoreModelSerializer dotECoreModelSerializer = new DotECoreModelSerializer();
-    final String rendererDiagram = dotECoreModelSerializer.start(ePackages, qPackages);
+    final String dot = Ecore2Dot.toDot(ePackages, qPackages);
     FileWriter fw = new FileWriter(argumentOutputFile);
-    fw.write(rendererDiagram);
+    fw.write(dot);
     fw.flush();
   }
 }

@@ -23,13 +23,18 @@ import java.util.stream.Collectors;
 /**
  * @author xix
  */
-public class UmlModelBuilder {
+public class Java2Uml {
 
-  private final static Logger LOGGER = Logger.getLogger(UmlModelBuilder.class.getSimpleName());
+  private final static Logger LOGGER = Logger.getLogger(Java2Uml.class.getSimpleName());
 
   private final static UMLFactory UML_FACTORY = UMLFactory.eINSTANCE;
 
-  public static Set<Package> build(final Collection<JavaPackage> qPackages) {
+  public static Set<Package> toUml(final Collection<JavaPackage> qPackages) {
+    Java2Uml java2Uml = new Java2Uml();
+    return java2Uml.build(qPackages);
+  }
+
+  public Set<Package> build(final Collection<JavaPackage> qPackages) {
 
     final Set<Package> uPackages = new HashSet<>();
     for (JavaPackage qPackage : qPackages) {
@@ -76,7 +81,7 @@ public class UmlModelBuilder {
           String iTypeName = javaClass.getName();
           Type iUType = findUType(iPackageName, iTypeName, uPackages);
           if (iUType != null) {
-            ((Class)uClass).createInterfaceRealization(null, (Interface) iUType);
+            ((Class) uClass).createInterfaceRealization(null, (Interface) iUType);
           } else {
             LOGGER.log(Level.WARNING, "type {} not present in uml packages", javaClass.getFullyQualifiedName());
           }

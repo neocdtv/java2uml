@@ -15,18 +15,22 @@ import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-public class DotECoreModelSerializer {
+public class Ecore2Dot {
 
-  private static final Logger LOGGER = Logger.getLogger(DotECoreModelSerializer.class.getName());
+  private static final Logger LOGGER = Logger.getLogger(Ecore2Dot.class.getName());
 
   private final boolean renderPackages = false;
   private final boolean renderConstants = false;
   private final boolean linkToPackage = false;
-  private static Set<String> VISIBLE_PACKAGES;
+  private Set<String> visiblePackages;
 
+  public static String toDot(final Set<EPackage> ePackages, final Collection<JavaPackage> qPackages) {
+    Ecore2Dot ecore2Dot = new Ecore2Dot();
+    return ecore2Dot.build(ePackages, qPackages);
+  }
 
-  public String start(final Set<EPackage> ePackages, final Collection<JavaPackage> qPackages) {
-    VISIBLE_PACKAGES = qPackages.stream().map(javaPackage -> javaPackage.getName()).collect(Collectors.toSet());
+  public String build(final Set<EPackage> ePackages, final Collection<JavaPackage> qPackages) {
+    visiblePackages = qPackages.stream().map(javaPackage -> javaPackage.getName()).collect(Collectors.toSet());
 
     StringBuilder dot = new StringBuilder();
     dot.append("digraph G {\n");
@@ -109,7 +113,7 @@ public class DotECoreModelSerializer {
   }
 
   private boolean isTypeVisible(final EClassifier type) {
-    return VISIBLE_PACKAGES.contains(type.getEPackage().getName());
+    return visiblePackages.contains(type.getEPackage().getName());
   }
 
   private void configureLayout(StringBuilder dot) {
@@ -171,7 +175,7 @@ public class DotECoreModelSerializer {
         doAttribute(dot, (EAttribute) eStructuralFeature);
       } else if (!isTypeVisible(eStructuralFeature)) {
         // TODO: why are Enums working???
-        doClassifierAsAttribute(dot, ((EReference)eStructuralFeature).getEReferenceType(), eStructuralFeature.getName());
+        doClassifierAsAttribute(dot, ((EReference) eStructuralFeature).getEReferenceType(), eStructuralFeature.getName());
       } else {
         LOGGER.warning("omited structural feature " + eStructuralFeature.getName());
       }
@@ -224,10 +228,7 @@ public class DotECoreModelSerializer {
     if (linkToPackage) {
       PackageLink packageLink = new PackageLink();
       packageLink.setName(attributeName);
-      // NullPointerException, not every eClassifier has a valid package?!?
-      //packageLink.setPackageName(eClassifier.getEPackage().getName());
       packageLink.setType(eClassifier.getName());
-      // TODO: serialize packageLink to json and use instead of hardcoded: dot.append(packageLink.getMarker());
       dot.append(packageLink);
       dot.append("\\l");
     } else {

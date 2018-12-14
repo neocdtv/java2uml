@@ -18,13 +18,19 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class DotUmlModelSerializer {
+public class Uml2Dot {
 
   private final boolean doPackages = false;
   private final boolean doConstants = false;
   private Set<JavaClass> qClasses = new HashSet<>();
 
-  public String start(final Set<Package> uPackages, final Set<JavaClass> qClasses) {
+  public static String toDot(final Set<Package> uPackages, final Set<JavaClass> qClasses) {
+    Uml2Dot uml2Dot = new Uml2Dot();
+    return uml2Dot.convert(uPackages, qClasses);
+  }
+
+
+    public String convert(final Set<Package> uPackages, final Set<JavaClass> qClasses) {
     // COMMENT: qClasses are selected to be rendered
     this.qClasses = qClasses;
 

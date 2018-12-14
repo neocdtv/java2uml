@@ -1,10 +1,13 @@
+COMMON:
+Bootstrap:
+multiple parameters -packages="{"packageName": "io.neocdtv.modelling.reverse.domain.customer", "sourceDir": "/home/xix/...."}" -packages="{..}"
+for every -packages create a .dot
+
+
 ECORE
 - remove duplication from model
-- check if the model is build correctly
-
-UML
-- remove duplication from model
-- check if the model is build correctly
+- check if the model is build correctly, how?
+- ask about EEnums on eclipse forum, and how to add generalization
 
 UML 2 ECORE
 - check the conversion
@@ -14,3 +17,4 @@ Code Snippets:
 - search in generated SVG for PACKAGE_LINK to replace it with a real link to the package
 Array.from(document.getElementsByTagName('text'))
 .forEach(function(text) { if (text.innerHTML.indexOf('PACKAGE_LINK') !== -1) { console.log(text.innerHTML); text.innerHTML = "<a href='#' onclick='alert(\"bla\")'>bla</a>"} });
+  change bla to a real link inside the the fe-app
