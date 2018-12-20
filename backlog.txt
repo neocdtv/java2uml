@@ -1,8 +1,26 @@
 COMMON:
 Bootstrap:
-multiple parameters -packages="{"packageName": "io.neocdtv.modelling.reverse.domain.customer", "sourceDir": "/home/xix/...."}" -packages="{..}"
-for every -packages create a .dot
+multiple parameters -packageInputConfigs="/home/xix/Projects/java2uml/packageInputConfigs.json" -outputDir="/home/xix/Projects/java2uml"
 
+for every packageName create a .dot
+output:
+    - create dir packages
+    - generate packages.json: // be careful this name is also used by nmp
+        [
+          {
+            "packageName" : "io.neocdtv.modelling.reverse.domain.customer"
+            "relativePath" "output/packages/io.neocdtv.modelling.reverse.domain.customer.dot":
+          },
+          {
+            "packageName" : "io.neocdtv.modelling.reverse.domain.offer"
+             "relativePath" "output/packages/io.neocdtv.modelling.reverse.domain.offer.dot":
+          }
+        ]
+
+replace PACKAGE_LINK with javascript link to app-context/relativePath
+
+java2uml-ui:
+create simple project, which will be able to deal with the generate packages.json
 
 ECORE
 - remove duplication from model

@@ -1,5 +1,7 @@
 package io.neocdtv.modelling.reverse;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.model.JavaClass;
 import com.thoughtworks.qdox.model.JavaPackage;
@@ -12,9 +14,12 @@ import org.eclipse.emf.ecore.EPackage;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -26,33 +31,58 @@ public class Main {
 
   private static final Logger LOGGER = Logger.getLogger(Main.class.getCanonicalName());
 
+  private final static ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
   public static void main(String[] args) throws IOException {
 
-    // TODO: collect multiple packages
-    final String packages = CliUtil.findCommandArgumentByName(CommandParameterNames.PACKAGES, args);
-    // TODO: multiple sourceDirs?
-    final String sourceDir = CliUtil.findCommandArgumentByName(CommandParameterNames.SOURCE_DIR, args);
-    // TODO: change file to dir, to write multiple packages
-    // TODO: how to determine name of the files, it can't be the package, cos you can have multiple packages separated by a comma. -> build with single package
-    final String outputFile = CliUtil.findCommandArgumentByName(CommandParameterNames.OUTPUT_FILE, args);
-
-    if (packages == null || sourceDir == null || outputFile == null) {
-      System.out.println("usage: java -jar target/java2uml.jar -packages=... -sourceDir=... -outputFile=... [-r] [-uml] ");
-      System.out.println("options:");
-      System.out.println("\t-r\trecursive package scanning");
-      System.out.println("\t-uml\tuse Eclipse Uml2 internally instead of Eclipse Ecore(alpha)");
-      System.out.println("example: java -jar target/java2uml.jar -packages=io.neocdtv.modelling.reverse.domain -sourceDir=src/main/java -outputFile=output.dot -r");
-      System.exit(1);
+    final String packageInputConfigsPath = CliUtil.findCommandArgumentByName(CommandParameterNames.PACKAGE_INPUT_CONFIGS, args);
+    final String outputDir = CliUtil.findCommandArgumentByName(CommandParameterNames.OUTPUT_DIR, args);
+    if (packageInputConfigsPath == null || outputDir == null) {
+      printUsageAndExit();
     }
 
-    final boolean recursivePackagesEnabled = CliUtil.isCommandArgumentPresent(CommandParameterNames.RECURSIVE_PACKAGE_SEARCH, args);
-    final JavaProjectBuilder builder = configureSourceFilesForAnalysis(packages, sourceDir, recursivePackagesEnabled);
 
-    if (CliUtil.isCommandArgumentPresent(CommandParameterNames.USE_ECLIPSE_UML, args)) {
-      generateUsingUmlModel(outputFile, builder.getPackages(), builder.getClasses());
-    } else {
-      generateUsingECoreModel(outputFile, builder.getPackages());
+    String content = new String(Files.readAllBytes(Paths.get(packageInputConfigsPath)), "UTF-8");
+    List<PackageInputConfig> packageInputConfigs = OBJECT_MAPPER.readValue(content, new TypeReference<List<PackageInputConfig>>() {});
+
+    String outputRelativePath = "output";
+    String outputDirectory = outputDir + File.separator + outputRelativePath;
+    File file = new File(outputDirectory);
+    file.mkdir();
+
+    for (PackageInputConfig packageInputConfig : packageInputConfigs) {
+      final boolean recursivePackagesEnabled = CliUtil.isCommandArgumentPresent(CommandParameterNames.RECURSIVE_PACKAGE_SEARCH, args);
+      final JavaProjectBuilder builder = configureSourceFilesForAnalysis(packageInputConfig.getPackageName(), packageInputConfig.getSourceDir(), recursivePackagesEnabled);
+
+      if (CliUtil.isCommandArgumentPresent(CommandParameterNames.USE_ECLIPSE_UML, args)) {
+        generateUsingUmlModel(buildOutputFileName(outputDirectory, packageInputConfig), builder.getPackages(), builder.getClasses());
+      } else {
+        generateUsingECoreModel(buildOutputFileName(outputDirectory, packageInputConfig), builder.getPackages());
+      }
     }
+
+    HashSet<PackageOutputConfig> packageOutputConfigs = new HashSet<>();
+    for (PackageInputConfig packageInputConfig : packageInputConfigs) {
+      final PackageOutputConfig packageOutputConfig = new PackageOutputConfig();
+      packageOutputConfig.setPackageName(packageInputConfig.getPackageName());
+      packageOutputConfig.setRelativePath(outputRelativePath + File.separator + packageInputConfig.getPackageName());
+      packageOutputConfigs.add(packageOutputConfig);
+    }
+
+    OBJECT_MAPPER.writeValue(new File(outputDirectory + File.separator + "packages.json") ,packageOutputConfigs);
+  }
+
+  private static String buildOutputFileName(String outputDir, PackageInputConfig packageInputConfig) {
+    return outputDir + File.separator + packageInputConfig.getPackageName();
+  }
+
+  private static void printUsageAndExit() {
+    System.out.println("usage: java -jar target/java2uml.jar -packageInputConfigs=... -sourceDir=... -outputDir=... [-uml] ");
+    System.out.println("options:");
+    //System.out.println("\t-r\trecursive package scanning");
+    System.out.println("\t-uml\tuse Eclipse Uml2 internally instead of Eclipse Ecore (alpha)");
+    System.out.println("example: java -jar target/java2uml.jar -packageInputConfigs=\"packageInputConfigs.json\" -outputDir=.");
+    System.exit(1);
   }
 
   private static void generateUsingUmlModel(String outputFile, java.util.Collection<JavaPackage> packages, java.util.Collection<JavaClass> qClasses) throws java.io.IOException {
@@ -93,16 +123,16 @@ public class Main {
     return builder;
   }
 
-  private static void serializeUml(final String argumentOutputFile, final Set<org.eclipse.uml2.uml.Package> uPackages, final Collection<JavaClass> qClasses) throws IOException {
+  private static void serializeUml(final String outputFile, final Set<org.eclipse.uml2.uml.Package> uPackages, final Collection<JavaClass> qClasses) throws IOException {
     final String rendererDiagram = Uml2Dot.toDot(uPackages, new HashSet<>(qClasses));
-    FileWriter fw = new FileWriter(argumentOutputFile);
+    FileWriter fw = new FileWriter(outputFile);
     fw.write(rendererDiagram);
     fw.flush();
   }
 
-  private static void serializeECore(final String argumentOutputFile, final Set<EPackage> ePackages, final Collection<JavaPackage> qPackages) throws IOException {
+  private static void serializeECore(final String outputFilel, final Set<EPackage> ePackages, final Collection<JavaPackage> qPackages) throws IOException {
     final String dot = Ecore2Dot.toDot(ePackages, qPackages);
-    FileWriter fw = new FileWriter(argumentOutputFile);
+    FileWriter fw = new FileWriter(outputFilel);
     fw.write(dot);
     fw.flush();
   }

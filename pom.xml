@@ -55,52 +55,17 @@
             <artifactId>org.eclipse.uml2.uml</artifactId>
             <version>5.0.1.v20140910-1354</version>
         </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.9.4</version>
+        </dependency>
     </dependencies>
 
 
     <build>
         <finalName>${name}</finalName>
         <plugins>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.2.1</version>
-                <executions>
-                    <execution>
-                        <id>domain</id>
-                        <phase>test</phase>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
-                        <configuration>
-                            <mainClass>io.neocdtv.modelling.reverse.Main</mainClass>
-                            <arguments>
-                                <argument>-r</argument>
-                                <argument>-packages=io.neocdtv.modelling.reverse.domain</argument>
-                                <argument>-sourceDir=src/main/java</argument>
-                                <argument>-outputFile=target/io.neocdtv.modelling.reverse.domain</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>domain-uml</id>
-                        <phase>test</phase>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
-                        <configuration>
-                            <mainClass>io.neocdtv.modelling.reverse.Main</mainClass>
-                            <arguments>
-                                <argument>-r</argument>
-                                <argument>-uml</argument>
-                                <argument>-packages=io.neocdtv.modelling.reverse.domain</argument>
-                                <argument>-sourceDir=src/main/java</argument>
-                                <argument>-outputFile=target/io.neocdtv.modelling.reverse.domain-uml</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
