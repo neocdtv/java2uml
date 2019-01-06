@@ -4,7 +4,7 @@ CLI tool to generate UML from Java Code.
 Input is java source code.
 Output format is graphviz dot.
 
-!WORK IN PROGRESS!
+!WORK IN PROGRESS-!
 
 How
 =====
@@ -19,14 +19,14 @@ run
 ======
 The build will generate a jar, which can be used like:
 
-        java -jar target/java2uml.jar -packages=... -sourceDir=... -outputFile=... [-r] [-ecore|-uml]
+        java -jar target/java2uml.jar -packageInputConfigs=... -sourceDir=... -outputDir=... [-uml] 
         options:
                 -r              recursive package scanning 
                 -uml            use Eclipse Uml2 internally instead of Eclipse Ecore(alpha)
                 
 example:
 
-        java -jar target/java2uml.jar -packages=io.neocdtv.modelling.reverse.domain -sourceDir=src/main/java -outputFile=output.dot -r
+        java -jar target/java2uml.jar -packageInputConfigs="packageInputConfigs.json" -outputDir=.
 
 This will generate a representation of a simple test domain model. To view it go to http://viz-js.com/ and paste its content.
 
