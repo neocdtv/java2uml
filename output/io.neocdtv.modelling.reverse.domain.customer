@@ -1,0 +1,64 @@
+digraph G {
+	fontname  = "Courier"
+	fontsize  = 8
+	nodesep=0.9
+	ranksep=0.9
+	splines=polyline
+	overlap=scalexy
+	node [
+		fontname = "Courier"
+		fontsize  = 8
+		shape  = "record"
+	]
+	edge [
+		fontname = "Courier"
+		fontsize  = 8
+	]
+		"io.neocdtv.modelling.reverse.domain.customer.Customer" [
+			label = "{Customer|attribute : EInt\l}"
+		]
+		"io.neocdtv.modelling.reverse.domain.customer.ICustomer" [
+			label = "{ICustomer|}"
+		]
+		"io.neocdtv.modelling.reverse.domain.customer.IPerson" [
+			label = "{IPerson|}"
+		]
+		"io.neocdtv.modelling.reverse.domain.customer.Organization" [
+			label = "{Organization|aSetAddresses : Address\laListAddresses : Address\larrayAddresses : Address\lmapAddresses : Map\lorgType : OrgType\l}"
+		]
+		"io.neocdtv.modelling.reverse.domain.customer.Person" [
+			label = "{Person|firstName : String\llastName : String\lfirstAddress : Address\lsecondAddress : Address\l}"
+		]
+		"io.neocdtv.modelling.reverse.domain.customer.Salutation" [
+			label = "{Salutation|}"
+		]
+		"io.neocdtv.modelling.reverse.domain.customer.Salutation" [
+			label = "{Salutation|MS\lMRS\lMR\l}"
+		]
+	"io.neocdtv.modelling.reverse.domain.customer.ICustomer" -> "io.neocdtv.modelling.reverse.domain.customer.Customer" [dir=back, style=dashed, arrowtail=empty]
+	"io.neocdtv.modelling.reverse.domain.customer.Customer" -> "io.neocdtv.modelling.reverse.domain.customer.Organization" [dir=back, arrowtail=empty]
+	"io.neocdtv.modelling.reverse.domain.customer.Salutation" -> "io.neocdtv.modelling.reverse.domain.customer.Person" [dir=back, arrowtail=open ,taillabel="salutation"]
+	"io.neocdtv.modelling.reverse.domain.customer.IPerson" -> "io.neocdtv.modelling.reverse.domain.customer.Person" [dir=back, style=dashed, arrowtail=empty]
+	"io.neocdtv.modelling.reverse.domain.customer.Customer" -> "io.neocdtv.modelling.reverse.domain.customer.Person" [dir=back, arrowtail=empty]
+		"io.neocdtv.modelling.reverse.domain.customer.Customer" [
+			label = "{Customer|attribute : EInt\l}"
+		]
+		"io.neocdtv.modelling.reverse.domain.customer.ICustomer" [
+			label = "{ICustomer|}"
+		]
+		"io.neocdtv.modelling.reverse.domain.customer.IPerson" [
+			label = "{IPerson|}"
+		]
+		"io.neocdtv.modelling.reverse.domain.customer.Organization" [
+			label = "{Organization|aSetAddresses : Address\laListAddresses : Address\larrayAddresses : Address\lmapAddresses : Map\lorgType : OrgType\l}"
+		]
+		"io.neocdtv.modelling.reverse.domain.customer.Person" [
+			label = "{Person|firstName : String\llastName : String\lfirstAddress : Address\lsecondAddress : Address\l}"
+		]
+		"io.neocdtv.modelling.reverse.domain.customer.Salutation" [
+			label = "{Salutation|}"
+		]
+		"io.neocdtv.modelling.reverse.domain.customer.Salutation" [
+			label = "{Salutation|MS\lMRS\lMR\l}"
+		]
+}

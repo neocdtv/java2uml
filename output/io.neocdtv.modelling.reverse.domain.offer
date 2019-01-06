@@ -1,0 +1,51 @@
+digraph G {
+	fontname  = "Courier"
+	fontsize  = 8
+	nodesep=0.9
+	ranksep=0.9
+	splines=polyline
+	overlap=scalexy
+	node [
+		fontname = "Courier"
+		fontsize  = 8
+		shape  = "record"
+	]
+	edge [
+		fontname = "Courier"
+		fontsize  = 8
+	]
+		"io.neocdtv.modelling.reverse.domain.offer.Contract" [
+			label = "{Contract|status : String\l}"
+		]
+		"io.neocdtv.modelling.reverse.domain.offer.Offer" [
+			label = "{Offer|date : Date\lkeepers : ICustomer\lowner : ICustomer\lcar : Car\laBoolean : EBoolean\lanInt : EInt\lcontactPerson : ICustomer\lconditionProvider : ICustomer\l}"
+		]
+		"io.neocdtv.modelling.reverse.domain.offer.Price" [
+			label = "{Price|}"
+		]
+		"io.neocdtv.modelling.reverse.domain.offer.Payment" [
+			label = "{Payment|}"
+		]
+		"io.neocdtv.modelling.reverse.domain.offer.Payment" [
+			label = "{Payment|CASH\lLEASING\l}"
+		]
+	"io.neocdtv.modelling.reverse.domain.offer.Offer" -> "io.neocdtv.modelling.reverse.domain.offer.Contract" [dir=back, arrowtail=open ,taillabel="offer"]
+	"io.neocdtv.modelling.reverse.domain.offer.Price" -> "io.neocdtv.modelling.reverse.domain.offer.Offer" [dir=back, arrowtail=open ,taillabel="prices 
+[0..*]"]
+	"io.neocdtv.modelling.reverse.domain.offer.Payment" -> "io.neocdtv.modelling.reverse.domain.offer.Offer" [dir=back, arrowtail=open ,taillabel="payment"]
+		"io.neocdtv.modelling.reverse.domain.offer.Contract" [
+			label = "{Contract|status : String\l}"
+		]
+		"io.neocdtv.modelling.reverse.domain.offer.Offer" [
+			label = "{Offer|date : Date\lkeepers : ICustomer\lowner : ICustomer\lcar : Car\laBoolean : EBoolean\lanInt : EInt\lcontactPerson : ICustomer\lconditionProvider : ICustomer\l}"
+		]
+		"io.neocdtv.modelling.reverse.domain.offer.Price" [
+			label = "{Price|}"
+		]
+		"io.neocdtv.modelling.reverse.domain.offer.Payment" [
+			label = "{Payment|}"
+		]
+		"io.neocdtv.modelling.reverse.domain.offer.Payment" [
+			label = "{Payment|CASH\lLEASING\l}"
+		]
+}
