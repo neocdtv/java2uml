@@ -2,13 +2,14 @@ COMMON:
 
 packages.json
 - sort packages by name
+- sort attributes by name
+- package.json on windows is generated wrong change to / instead of \\
+- add clusters to simplify diagrams
 
 ECORE
 - remove duplication from model
 - check if the model is build correctly, how?
 - ask about EEnums on eclipse forum, and how to add generalization
-
-
 
 UML 2 ECORE
 - check the conversion
