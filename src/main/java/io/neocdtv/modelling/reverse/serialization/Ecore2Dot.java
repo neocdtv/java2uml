@@ -21,7 +21,7 @@ public class Ecore2Dot {
 
   private final boolean renderPackages = false;
   private final boolean renderConstants = false;
-  private final boolean linkToPackage = false;
+  private final boolean linkToPackage = true;
   private Set<String> visiblePackages;
 
   public static String toDot(final Set<EPackage> ePackages, final Collection<JavaPackage> qPackages) {
@@ -229,6 +229,7 @@ public class Ecore2Dot {
       PackageLink packageLink = new PackageLink();
       packageLink.setName(attributeName);
       packageLink.setType(eClassifier.getName());
+      packageLink.setPackageName(eClassifier.getEPackage().getName());
       dot.append(packageLink);
       dot.append("\\l");
     } else {
