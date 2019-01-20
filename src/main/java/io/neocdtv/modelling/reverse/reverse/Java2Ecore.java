@@ -36,7 +36,6 @@ public class Java2Ecore {
   private final static EcoreFactory ECORE_FACTORY = EcoreFactory.eINSTANCE;
   private final static EcorePackage ECORE_PACKAGE = EcorePackage.eINSTANCE;
 
-  // contains only packages (1) selected but not packages referenced by classes from the selected packages (1) - TODO: should at the end contain all packages
   private Set<EPackage> ePackages;
   private Set<String> visiblePackages;
 
