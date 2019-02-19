@@ -2,7 +2,6 @@ package io.neocdtv.modelling.reverse;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ibm.devworks.sample.DynamicModelSerializer;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.model.JavaClass;
 import com.thoughtworks.qdox.model.JavaPackage;
@@ -93,8 +92,6 @@ public class Main {
 
   private static void generateUsingECoreModel(String outputFile, java.util.Collection<JavaPackage> qPackages) throws java.io.IOException {
     final Set<EPackage> ePackages = Java2Ecore.toEcore(qPackages);
-    DynamicModelSerializer theModelSerializer = new DynamicModelSerializer();
-    //theModelSerializer.serializeMetaModel(ePackages, "123");
     serializeECore(outputFile, ePackages, qPackages);
   }
 

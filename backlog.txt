@@ -12,7 +12,18 @@ ECORE
 - ask about EEnums on eclipse forum, and how to add generalization
 
 UML 2 ECORE
-- check the conversion
+- does this conversion make sense?
 
-XMI
-- check out xmi export
+uml-io:
+- find primitive types with search API - is not implemented
+- what are exactly prmitive types in UML: is String, Date, int all primitives
+- why should somebody put primitive type on top level of the model see: GettingStartedWithUML2, just an abstration
+
+export:
+- check magic draw import:
+    - ecore
+    - uml (xmi)
+
+Eclipse UML2 (BasicReverse):
+- create directed associations with multiplicity
+

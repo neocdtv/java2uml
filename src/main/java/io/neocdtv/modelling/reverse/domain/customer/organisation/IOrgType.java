@@ -2,9 +2,7 @@ package io.neocdtv.modelling.reverse.domain.customer.organisation;
 
 /**
  * @author xix
- * @since 20.11.18
+ * @since 28.01.19
  */
-public enum OrgType implements IOrgType {
-  AG,
-  GMBH
+public interface IOrgType {
 }
