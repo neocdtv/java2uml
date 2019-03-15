@@ -51,6 +51,11 @@ public class BasicReverse {
     // add interface realization
     human.createInterfaceRealization("humanIsAnimal", animal);
 
+    // add class to subpackage
+    Class woman = createClass("Woman");
+    humanity.getOwnedTypes().add(woman);
+    human.createGeneralization(animal);
+
     // add class to subpackage and add associations from human
     Class head = createClass("Head");
     humanity.getOwnedTypes().add(head);
@@ -73,6 +78,7 @@ public class BasicReverse {
 
     Enumeration orderStatusEnumeration = createEnumeration(nature,
         "OrderStatus");
+
     createEnumerationLiteral(orderStatusEnumeration, "Pending");
     createEnumerationLiteral(orderStatusEnumeration, "BackOrder");
     createEnumerationLiteral(orderStatusEnumeration, "Complete");

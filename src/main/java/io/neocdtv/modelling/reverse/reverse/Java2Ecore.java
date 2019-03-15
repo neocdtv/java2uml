@@ -55,10 +55,9 @@ public class Java2Ecore {
         if (qClass.isEnum()) {
           buildEEnum(qClass);
         } else {
-          eClassifier = buildForVisibleAndInvisibleTypes(qClass);
+          eClassifier = getOrCreateClass(qClass);
           buildGeneralizationRelations((EClass) eClassifier, qClass);
         }
-
       }
     }
     return ePackages;
@@ -97,7 +96,7 @@ public class Java2Ecore {
     final JavaClass superQClass = qClass.getSuperJavaClass();
     if (determineIfSuperClassShouldBeIncluded(superQClass)) {
       LOGGER.info("building relation to super class: " + superQClass.getCanonicalName() + " from: " + qClass.getClass().getCanonicalName());
-      EClass superEClass = buildForVisibleAndInvisibleTypes(superQClass);
+      EClass superEClass = getOrCreateClass(superQClass);
       eClass.getESuperTypes().add(superEClass);
     } else {
       LOGGER.info("not building super class: " + superQClass != null ? null : superQClass.getCanonicalName() + " for: " + qClass.getClass().getCanonicalName());
@@ -109,7 +108,7 @@ public class Java2Ecore {
       final String canonicalName = implementedInterface.getCanonicalName();
       LOGGER.info("building interface: " + canonicalName + " for: " + eClass.getInstanceClassName());
       LOGGER.info("building interface realization relation to interface: " + canonicalName + " from: " + eClass.getInstanceClassName());
-      EClass eInterface = buildForVisibleAndInvisibleTypes(implementedInterface);
+      EClass eInterface = getOrCreateClass(implementedInterface);
       eInterface.setInterface(true);
       eClass.getESuperTypes().add(eInterface);
     }
@@ -149,35 +148,35 @@ public class Java2Ecore {
       // check if eClass is in selected package
       LOGGER.info("working on dependency from class: " + eClass.getName() + " and field " + field.getName());
       //if (fieldType != null) { // TODO: understand why this can happen
-        EClass referenced;
-        // TODO: handle maps; maps in uml?
-        // TODO: handle EEnum
-        try {
-          if (fieldType.isArray()) {
-            referenced = buildForVisibleAndInvisibleTypes(fieldType.getComponentType());
-            eReference.setContainment(true);
-            eReference.setLowerBound(0);
-            eReference.setUpperBound(EStructuralFeature.UNBOUNDED_MULTIPLICITY);
-          } else if (fieldType.isA(Collection.class.getName())) {
-            final List<JavaType> actualTypeArguments = ((DefaultJavaParameterizedType) fieldType).getActualTypeArguments();
-            final DefaultJavaType genericTypeVariable = (DefaultJavaType) actualTypeArguments.get(0);
-            referenced = buildForVisibleAndInvisibleTypes(genericTypeVariable);
-            eReference.setContainment(true);
-            eReference.setLowerBound(0);
-            eReference.setUpperBound(EStructuralFeature.UNBOUNDED_MULTIPLICITY);
-          } else {
-            referenced = buildForVisibleAndInvisibleTypes(fieldType);
-          }
-          eReference.setEType(referenced);
-          eClass.getEStructuralFeatures().add(eReference);
-        } catch (NullPointerException e) {
-          LOGGER.severe(e.getMessage());
+      EClass referenced;
+      // TODO: handle maps; maps in uml?
+      // TODO: handle EEnum
+      try {
+        if (fieldType.isArray()) {
+          referenced = getOrCreateClass(fieldType.getComponentType());
+          eReference.setContainment(true);
+          eReference.setLowerBound(0);
+          eReference.setUpperBound(EStructuralFeature.UNBOUNDED_MULTIPLICITY);
+        } else if (fieldType.isA(Collection.class.getName())) {
+          final List<JavaType> actualTypeArguments = ((DefaultJavaParameterizedType) fieldType).getActualTypeArguments();
+          final DefaultJavaType genericTypeVariable = (DefaultJavaType) actualTypeArguments.get(0);
+          referenced = getOrCreateClass(genericTypeVariable);
+          eReference.setContainment(true);
+          eReference.setLowerBound(0);
+          eReference.setUpperBound(EStructuralFeature.UNBOUNDED_MULTIPLICITY);
+        } else {
+          referenced = getOrCreateClass(fieldType);
         }
+        eReference.setEType(referenced);
+        eClass.getEStructuralFeatures().add(eReference);
+      } catch (NullPointerException e) {
+        LOGGER.severe(e.getMessage());
+      }
       //}
     }
   }
 
-  private EClass buildForVisibleAndInvisibleTypes(JavaClass javaClass) {
+  private EClass getOrCreateClass(JavaClass javaClass) {
     EClass referenced = getOrCreateClassifier(javaClass);
     if (referenced != null) {
       return referenced;
@@ -205,7 +204,7 @@ public class Java2Ecore {
       LOGGER.info("found existing class: " + javaClass.getFullyQualifiedName());
       EClassifier next = collectedClassifiers.iterator().next();
       if (next instanceof EClass) {
-        existing = (EClass)next;
+        existing = (EClass) next;
       }
     }
     return existing;

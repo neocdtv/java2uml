@@ -1,4 +1,4 @@
-package io.neocdtv.modelling.reverse;
+package io.neocdtv.modelling.reverse.reverse;
 
 import com.thoughtworks.qdox.model.JavaPackage;
 import org.batchjob.uml.io.exception.NotFoundException;
@@ -28,9 +28,9 @@ import java.util.stream.Collectors;
  * @author xix
  * @since 29.01.19
  */
-public class PackageTransformation {
+public class PackageConverter {
 
-  final static Logger LOGGER = Logger.getLogger(PackageTransformation.class.getName());
+  final static Logger LOGGER = Logger.getLogger(PackageConverter.class.getName());
   final static UMLFactory UML_FACTORY = UMLFactory.eINSTANCE;
   final static String UML_PACKAGE_PATH_SEPARATOR = "::";
   final static String JAVA_PACKAGE_PATH_SEPARATOR = ".";
@@ -38,8 +38,8 @@ public class PackageTransformation {
   final static String MODEL_NAME = "model";
 
   public static Model transform(final Collection<JavaPackage> qPackages) {
-    final PackageTransformation packageTransformation = new PackageTransformation();
-    return packageTransformation.start(
+    final PackageConverter packageConverter = new PackageConverter();
+    return packageConverter.start(
         qPackages.stream()
             .map(javaPackage -> javaPackage.getName()).collect(Collectors.toList()));
   }
@@ -48,12 +48,16 @@ public class PackageTransformation {
     final Model model = UML_FACTORY.createModel();
     model.setName(MODEL_NAME);
     packagePaths.forEach(packagePath -> {
-      getOrCreatePackage(model, model, packagePath, 0);
+      getOrCreatePackage(model, packagePath);
     });
     return model;
   }
 
-  void getOrCreatePackage(final Model model, final Package parentPackage, final String packagePath, int packagePathThreshold) {
+  Package getOrCreatePackage(final Model model, final String packagePath) {
+    return getOrCreatePackage(model, model, packagePath, 0);
+  }
+
+  Package getOrCreatePackage(final Model model, final Package parentPackage, final String packagePath, int packagePathThreshold) {
     Package packageToGetOrCreate;
     List<String> packagePathToGetOrCreate = getPackagePathToThreshold(packagePath, packagePathThreshold);
 
@@ -70,6 +74,7 @@ public class PackageTransformation {
     if (hasSubPackages(packagePath, packagePathToGetOrCreate)) {
       getOrCreatePackage(model, packageToGetOrCreate, packagePath, ++packagePathThreshold);
     }
+    return packageToGetOrCreate;
   }
 
   List<String> getPackagePathToThreshold(final String packagePath, final int packagePathThreshold) {

@@ -41,7 +41,6 @@ public class Main {
       printUsageAndExit();
     }
 
-
     String content = new String(Files.readAllBytes(Paths.get(packageInputConfigsPath)), "UTF-8");
     List<PackageInputConfig> packageInputConfigs = OBJECT_MAPPER.readValue(content, new TypeReference<List<PackageInputConfig>>() {});
 
@@ -50,26 +49,7 @@ public class Main {
     File file = new File(outputDirectory);
     file.mkdir();
 
-    for (PackageInputConfig packageInputConfig : packageInputConfigs) {
-      final boolean recursivePackagesEnabled = CliUtil.isCommandArgumentPresent(CommandParameterNames.RECURSIVE_PACKAGE_SEARCH, args);
-      final JavaProjectBuilder builder = configureSourceFilesForAnalysis(packageInputConfig.getPackageName(), packageInputConfig.getSourceDir(), recursivePackagesEnabled);
-
-      if (CliUtil.isCommandArgumentPresent(CommandParameterNames.USE_ECLIPSE_UML, args)) {
-        generateUsingUmlModel(buildOutputFileName(outputDirectory, packageInputConfig), builder.getPackages(), builder.getClasses());
-      } else {
-        generateUsingECoreModel(buildOutputFileName(outputDirectory, packageInputConfig), builder.getPackages());
-      }
-    }
-
-    HashSet<PackageOutputConfig> packageOutputConfigs = new HashSet<>();
-    for (PackageInputConfig packageInputConfig : packageInputConfigs) {
-      final PackageOutputConfig packageOutputConfig = new PackageOutputConfig();
-      packageOutputConfig.setPackageName(packageInputConfig.getPackageName());
-      packageOutputConfig.setRelativePath(outputRelativePath + "/" + packageInputConfig.getPackageName());
-      packageOutputConfigs.add(packageOutputConfig);
-    }
-
-    OBJECT_MAPPER.writeValue(new File(outputDirectory + File.separator + "packages.json") ,packageOutputConfigs);
+    OBJECT_MAPPER.writeValue(new File(outputDirectory + File.separator + "packages.json") ,"");
   }
 
   private static String buildOutputFileName(String outputDir, PackageInputConfig packageInputConfig) {
@@ -101,7 +81,6 @@ public class Main {
     final String[] packages = argumentPackages.split(",");
     for (String aPackage : packages) {
       String replaceSeparator;
-      // TODO: OS specific aPackage.replaceAll, add support for unix-like OS
       final String replaceAll = aPackage.replaceAll("\\.", File.separator + File.separator);
       final String packageDir = argumentSourceDir + File.separator + replaceAll;
       final File directory = new File(packageDir);
