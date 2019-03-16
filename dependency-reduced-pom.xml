@@ -48,6 +48,20 @@
       <url>https://repo.eclipse.org/content/repositories/releases/</url>
     </repository>
   </repositories>
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>hamcrest-core</artifactId>
+          <groupId>org.hamcrest</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+  </dependencies>
   <properties>
     <shade.version>3.1.0</shade.version>
     <name>java2uml</name>

@@ -46,20 +46,13 @@ public class GettingStartedWithUML2 {
 
   private static File outputDir;
 
-  /**
-   * The main program. It expects one argument, which is the local filesystem
-   * path of a directory in which to create the <tt>ExtendedPO2.uml.xml</tt> file.
-   *
-   * @param the
-   *            program arguments, which must consist of a single filesystem
-   *            path
-   */
-
   public static void main(String[] args) {
     Model model = buildModel();
 
     Collection<EPackage> ePackages = UMLUtil.convertToEcore(model, new HashMap<>());
 
+    ModelSerializer.serializeEcoreJson(ePackages,
+        "/home/xix/Projects/workspace-eclipse-modeling-current/reversed-models/model/epo.json");
 
     ModelSerializer.serializeEcore(ePackages,
         "/home/xix/Projects/workspace-eclipse-modeling-current/reversed-models/model/epo.ecore");

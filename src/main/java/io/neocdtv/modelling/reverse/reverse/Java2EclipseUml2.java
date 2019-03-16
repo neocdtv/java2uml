@@ -5,6 +5,7 @@ import com.thoughtworks.qdox.model.JavaPackage;
 import org.batchjob.uml.io.exception.NotFoundException;
 import org.batchjob.uml.io.utils.Uml2Utils;
 import org.eclipse.uml2.uml.Class;
+import org.eclipse.uml2.uml.Enumeration;
 import org.eclipse.uml2.uml.Model;
 import org.eclipse.uml2.uml.Package;
 import org.eclipse.uml2.uml.UMLFactory;
@@ -37,32 +38,62 @@ public class Java2EclipseUml2 {
       final Collection<JavaClass> qClasses = qPackage.getClasses();
       for (JavaClass qClass : qClasses) {
         if (qClass.isEnum()) {
-          // buildEnum
+          Enumeration uEnum = getOrCreateEnumAndAddToPackage(qClass, model);
+          // TODO: add generalizations??
+          // TODO: add interface realizations??
         } else {
-          Class orCreateClass = getOrCreateClass(qClass, model);
-          //eClassifier = buildForVisibleAndInvisibleTypes(qClass);
-          //buildGeneralizationRelations((EClass) eClassifier, qClass);
+          Class uClass = getOrCreateClassAndAddToPackage(qClass, model);
+          // TODO: add generalizations
+          // TODO: add interface realizations
         }
       }
     }
   }
 
-  private Class getOrCreateClass(JavaClass javaClass, final Model model) {
+  private Enumeration getOrCreateEnumAndAddToPackage(JavaClass qClass, Model model) {
+    Enumeration uEnum;
+    try {
+      List<String> packagePath = packageConverter.splitPackagePath(qClass.getPackageName());
+      uEnum = Uml2Utils.findElement(createUmlPathForClassifier(qClass, model, packagePath), model);
+      return uEnum;
+    } catch (NotFoundException notFoundException) {
+      Package parentPackage = packageConverter.getOrCreatePackage(model, qClass.getPackageName());
+      // TODO: is this check needed here
+      //if (isTypeVisible(qClass)) {
+      uEnum = createEnum(qClass);
+
+      parentPackage.getOwnedTypes().add(uEnum);
+      return uEnum;
+    }
+  }
+
+  private Class getOrCreateClassAndAddToPackage(JavaClass qClass, final Model model) {
     Class uClass;
     try {
-      List<String> packagePath = packageConverter.splitPackagePath(javaClass.getPackageName());
-      uClass = Uml2Utils.findElement(packageConverter.convertJavaPackagePath2UmlPath(model.getName(), packagePath), model);
+      List<String> packagePath = packageConverter.splitPackagePath(qClass.getPackageName());
+      uClass = Uml2Utils.findElement(createUmlPathForClassifier(qClass, model, packagePath), model);
       return uClass;
     } catch (NotFoundException notFoundException) {
-      Package parentPackage = packageConverter.getOrCreatePackage(model, javaClass.getPackageName());
-      if (isTypeVisible(javaClass)) {
-        uClass = createClass(javaClass);
+      Package parentPackage = packageConverter.getOrCreatePackage(model, qClass.getPackageName());
+      if (isTypeVisible(qClass)) {
+        uClass = createClass(qClass);
       } else {
-        uClass = createClassWithoutAttributes(javaClass);
+        uClass = createClassWithoutAttributes(qClass);
       }
       parentPackage.getOwnedTypes().add(uClass);
       return uClass;
     }
+  }
+
+  private String createUmlPathForClassifier(JavaClass javaClass, Model model, List<String> packagePath) {
+    return packageConverter.convertJavaPackagePath2UmlPath(model.getName(), packagePath) + "::" + javaClass.getName();
+  }
+
+  private Enumeration createEnum(final JavaClass qClass) {
+    Enumeration uEnum = UML_FACTORY.createEnumeration();
+    uEnum.setName(qClass.getName());
+    // TODO: add literals
+    return uEnum;
   }
 
   private Class createClass(final JavaClass qClass) {
@@ -72,9 +103,9 @@ public class Java2EclipseUml2 {
   }
 
   private Class createClassWithoutAttributes(final JavaClass qClass) {
-    Class aClass = UML_FACTORY.createClass();
-    aClass.setName(qClass.getName());
-    return aClass;
+    Class uClass = UML_FACTORY.createClass();
+    uClass.setName(qClass.getName());
+    return uClass;
   }
 
   private boolean isTypeVisible(JavaClass type) {

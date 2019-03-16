@@ -5,11 +5,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.model.JavaClass;
 import com.thoughtworks.qdox.model.JavaPackage;
+import io.neocdtv.modelling.reverse.reverse.Java2EclipseUml2;
 import io.neocdtv.modelling.reverse.reverse.Java2Ecore;
 import io.neocdtv.modelling.reverse.reverse.Java2Uml;
+import io.neocdtv.modelling.reverse.reverse.PackageConverter;
 import io.neocdtv.modelling.reverse.serialization.Ecore2Dot;
 import io.neocdtv.modelling.reverse.serialization.Uml2Dot;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.uml2.examples.gettingstarted.ModelSerializer;
+import org.eclipse.uml2.uml.Model;
+import org.eclipse.uml2.uml.util.UMLUtil;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -18,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -33,6 +39,10 @@ public class Main {
 
   private final static ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
+  static {
+    // TODO: add sorting for maps and for attributes
+  }
+
   public static void main(String[] args) throws IOException {
 
     final String packageInputConfigsPath = CliUtil.findCommandArgumentByName(CommandParameterNames.PACKAGE_INPUT_CONFIGS, args);
@@ -42,18 +52,20 @@ public class Main {
     }
 
     String content = new String(Files.readAllBytes(Paths.get(packageInputConfigsPath)), "UTF-8");
-    List<PackageInputConfig> packageInputConfigs = OBJECT_MAPPER.readValue(content, new TypeReference<List<PackageInputConfig>>() {});
+    List<PackageInputConfig> packageInputConfigs = OBJECT_MAPPER.readValue(content, new TypeReference<List<PackageInputConfig>>() {
+    });
+    JavaProjectBuilder javaProjectBuilder = configurePackagesForAnalysis(packageInputConfigs);
 
     String outputRelativePath = "output";
     String outputDirectory = outputDir + File.separator + outputRelativePath;
     File file = new File(outputDirectory);
     file.mkdir();
 
-    OBJECT_MAPPER.writeValue(new File(outputDirectory + File.separator + "packages.json") ,"");
-  }
-
-  private static String buildOutputFileName(String outputDir, PackageInputConfig packageInputConfig) {
-    return outputDir + File.separator + packageInputConfig.getPackageName();
+    Collection<JavaPackage> qPackages = javaProjectBuilder.getPackages();
+    Model model = PackageConverter.transform(qPackages);
+    Java2EclipseUml2.toUml(qPackages, model);
+    Collection<EPackage> ePackages = UMLUtil.convertToEcore(model.getNearestPackage(), new HashMap<>());
+    ModelSerializer.serializeEcoreJson(ePackages, outputDirectory  + File.separator + "ecore.json");
   }
 
   private static void printUsageAndExit() {
@@ -75,12 +87,27 @@ public class Main {
     serializeECore(outputFile, ePackages, qPackages);
   }
 
+  private static JavaProjectBuilder configurePackagesForAnalysis(List<PackageInputConfig> packageInputConfigs) {
+    // TODO: add the possibility to add just certain java-files, not just whole packages;think about it, how to combine it with -packages
+    final JavaProjectBuilder builder = new JavaProjectBuilder();
+
+    packageInputConfigs.forEach(packageInputConfig -> {
+      final String relativePackageDir = packageInputConfig.getPackageName().replaceAll("\\.", File.separator + File.separator);
+      final String absolutePackageDir = packageInputConfig.getSourceDir() + File.separator + relativePackageDir;
+      final File packageDir = new File(absolutePackageDir);
+      LOGGER.log(Level.INFO, "recursive package scanning {0}", packageDir.getAbsolutePath());
+      builder.addSourceTree(packageDir);
+    });
+    return builder;
+  }
+
+
+  @Deprecated
   private static JavaProjectBuilder configureSourceFilesForAnalysis(String argumentPackages, String argumentSourceDir, boolean recursiveSearch) {
     // TODO: add the possibility to add just certain java-files, not just whole packages;think about it, how to combine it with -packages
     final JavaProjectBuilder builder = new JavaProjectBuilder();
     final String[] packages = argumentPackages.split(",");
     for (String aPackage : packages) {
-      String replaceSeparator;
       final String replaceAll = aPackage.replaceAll("\\.", File.separator + File.separator);
       final String packageDir = argumentSourceDir + File.separator + replaceAll;
       final File directory = new File(packageDir);
