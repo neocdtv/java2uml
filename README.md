@@ -13,8 +13,8 @@ checkout and build dependent project(s) (not present in maven reps)
         mvn clean install
 build
 ======
-
-
+        cd ./java2uml  
+        mvn clean install
 run
 ======
 
