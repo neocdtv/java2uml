@@ -57,7 +57,7 @@ public class Java2EclipseUml2 {
       uEnum = Uml2Utils.findElement(createUmlPathForClassifier(qClass, model, packagePath), model);
       return uEnum;
     } catch (NotFoundException notFoundException) {
-      Package parentPackage = packageConverter.getOrCreatePackage(model, qClass.getPackageName());
+      Package parentPackage = packageConverter.findPackage(model, qClass.getPackageName());
       // TODO: is this check needed here
       //if (isTypeVisible(qClass)) {
       uEnum = createEnum(qClass);
@@ -74,7 +74,7 @@ public class Java2EclipseUml2 {
       uClass = Uml2Utils.findElement(createUmlPathForClassifier(qClass, model, packagePath), model);
       return uClass;
     } catch (NotFoundException notFoundException) {
-      Package parentPackage = packageConverter.getOrCreatePackage(model, qClass.getPackageName());
+      Package parentPackage = packageConverter.findPackage(model, qClass.getPackageName());
       if (isTypeVisible(qClass)) {
         uClass = createClass(qClass);
       } else {

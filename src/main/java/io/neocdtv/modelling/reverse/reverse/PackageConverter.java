@@ -48,16 +48,28 @@ public class PackageConverter {
     final Model model = UML_FACTORY.createModel();
     model.setName(MODEL_NAME);
     packagePaths.forEach(packagePath -> {
-      getOrCreatePackage(model, packagePath);
+      getOrCreatePackageTree(model, packagePath);
     });
     return model;
   }
 
-  Package getOrCreatePackage(final Model model, final String packagePath) {
-    return getOrCreatePackage(model, model, packagePath, 0);
+  Package findPackage(final Model model, final String packagePath) {
+    final Package packageTree = getOrCreatePackageTree(model, packagePath);
+    String umlPath = convertJavaPackagePath2UmlPath(model.getName(), splitPackagePath(packagePath));
+    return Uml2Utils.findElement(umlPath, model);
   }
 
-  Package getOrCreatePackage(final Model model, final Package parentPackage, final String packagePath, int packagePathThreshold) {
+  /**
+   *
+   * @param model
+   * @param packagePath
+   * @return package tree
+   */
+  Package getOrCreatePackageTree(final Model model, final String packagePath) {
+    return getOrCreatePackageTree(model, model, packagePath, 0);
+  }
+
+  Package getOrCreatePackageTree(final Model model, final Package parentPackage, final String packagePath, int packagePathThreshold) {
     Package packageToGetOrCreate;
     List<String> packagePathToGetOrCreate = getPackagePathToThreshold(packagePath, packagePathThreshold);
 
@@ -72,7 +84,7 @@ public class PackageConverter {
       parentPackage.getNestedPackages().add(packageToGetOrCreate);
     }
     if (hasSubPackages(packagePath, packagePathToGetOrCreate)) {
-      getOrCreatePackage(model, packageToGetOrCreate, packagePath, ++packagePathThreshold);
+      getOrCreatePackageTree(model, packageToGetOrCreate, packagePath, ++packagePathThreshold);
     }
     return packageToGetOrCreate;
   }

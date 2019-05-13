@@ -29,7 +29,6 @@ import org.eclipse.uml2.uml.Type;
 import org.eclipse.uml2.uml.UMLFactory;
 import org.eclipse.uml2.uml.util.UMLUtil;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 
@@ -40,7 +39,7 @@ import java.util.HashMap;
  *
  * @see http://wiki.eclipse.org/MDT/UML2/Getting_Started_with_UML2
  */
-public class GettingStartedWithUML2 {
+public class GettingStartedWithUML2SmallestPossible {
 
   public static boolean DEBUG = true;
 
@@ -52,11 +51,11 @@ public class GettingStartedWithUML2 {
     Collection<EPackage> ePackages = UMLUtil.convertToEcore(model, new HashMap<>());
 
     ModelSerializer.serializeEcore(ePackages,
-        ECLIPSE_PROJECT_MODEL_PATH + "model-epo.ecore");
+        ECLIPSE_PROJECT_MODEL_PATH + "model.ecore");
     ModelSerializer.serializeEcoreJson(ePackages,
-        ECLIPSE_PROJECT_MODEL_PATH + "model-epo.json");
+        ECLIPSE_PROJECT_MODEL_PATH + "model-epo-min.json");
     ModelSerializer.serializeUml(model,
-        ECLIPSE_PROJECT_MODEL_PATH + "model-epo.uml");
+        ECLIPSE_PROJECT_MODEL_PATH + "model-epo-min.uml");
   }
 
   public static Model buildModel() {
@@ -66,110 +65,17 @@ public class GettingStartedWithUML2 {
 
     // Create the root package (a model).
     Model epo2Model = createModel("epo2");
+    PrimitiveType stringPrimitiveType = createPrimitiveType(epo2Model,"String");
 
     // Create primitive types to be used as types of attributes in our
     // classes.
-    PrimitiveType intPrimitiveType = createPrimitiveType(epo2Model, "int");
-    PrimitiveType stringPrimitiveType = createPrimitiveType(epo2Model,
-        "String");
-    PrimitiveType datePrimitiveType = createPrimitiveType(epo2Model, "Date");
-    PrimitiveType skuPrimitiveType = createPrimitiveType(epo2Model, "SKU");
-
-    // Create enumerations to be used as types of attributes in our classes.
-    Enumeration orderStatusEnumeration = createEnumeration(epo2Model,
-        "OrderStatus");
-    createEnumerationLiteral(orderStatusEnumeration, "Pending");
-    createEnumerationLiteral(orderStatusEnumeration, "BackOrder");
-    createEnumerationLiteral(orderStatusEnumeration, "Complete");
 
     banner("Creating model classes.");
 
     // Create the classes.
     org.eclipse.uml2.uml.Class supplierClass = createClass(epo2Model,
         "Supplier", false);
-    org.eclipse.uml2.uml.Class customerClass = createClass(epo2Model,
-        "Customer", false);
-    org.eclipse.uml2.uml.Class purchaseOrderClass = createClass(epo2Model,
-        "PurchaseOrder", false);
-    org.eclipse.uml2.uml.Class itemClass = createClass(epo2Model, "Item",
-        false);
-    org.eclipse.uml2.uml.Class addressClass = createClass(epo2Model,
-        "Address", true);
-    org.eclipse.uml2.uml.Class usAddressClass = createClass(epo2Model,
-        "USAddress", false);
-    org.eclipse.uml2.uml.Class globalAddressClass = createClass(epo2Model,
-        "GlobalAddress", false);
-    org.eclipse.uml2.uml.Class globalLocationClass = createClass(epo2Model,
-        "GlobalLocation", false);
-
-    // Create generalization relationships amongst our classes.
-    createGeneralization(usAddressClass, addressClass);
-    createGeneralization(globalAddressClass, addressClass);
-    createGeneralization(globalAddressClass, globalLocationClass);
-
-    banner("Creating attributes of model classes.");
-
-    // Create attributes in our classes.
     createAttribute(supplierClass, "name", stringPrimitiveType, 0, 1);
-    createAttribute(customerClass, "customerID", intPrimitiveType, 1, 1);
-    createAttribute(purchaseOrderClass, "comment", stringPrimitiveType, 0,
-        1);
-    createAttribute(purchaseOrderClass, "orderDate", datePrimitiveType, 1,
-        1);
-    createAttribute(purchaseOrderClass, "status", orderStatusEnumeration,
-        1, 1);
-    createAttribute(purchaseOrderClass, "totalAmount", intPrimitiveType, 0,
-        1);
-    createAttribute(itemClass, "productName", stringPrimitiveType, 0, 1);
-    createAttribute(itemClass, "quantity", intPrimitiveType, 0, 1);
-    createAttribute(itemClass, "usPrice", intPrimitiveType, 0, 1);
-    createAttribute(itemClass, "comment", stringPrimitiveType, 0, 1);
-    createAttribute(itemClass, "shipDate", datePrimitiveType, 0, 1);
-    createAttribute(itemClass, "partNum", skuPrimitiveType, 1, 1);
-    createAttribute(addressClass, "name", stringPrimitiveType, 0, 1);
-    createAttribute(addressClass, "country", stringPrimitiveType, 0, 1);
-    createAttribute(usAddressClass, "street", stringPrimitiveType, 1, 1);
-    createAttribute(usAddressClass, "city", stringPrimitiveType, 1, 1);
-    createAttribute(usAddressClass, "state", stringPrimitiveType, 1, 1);
-    createAttribute(usAddressClass, "zip", stringPrimitiveType, 1, 1);
-    createAttribute(globalAddressClass, "location", stringPrimitiveType, 1,
-        1);
-    createAttribute(globalLocationClass, "countryCode", intPrimitiveType,
-        1, 1);
-
-    banner("Creating associations between model classes.");
-
-    // Create associations between our classes.
-    createAssociation(supplierClass, true,
-        AggregationKind.COMPOSITE_LITERAL, "orders", 0,
-        LiteralUnlimitedNatural.UNLIMITED, purchaseOrderClass, false,
-        AggregationKind.NONE_LITERAL, "", 1, 1);
-    createAssociation(supplierClass, true, AggregationKind.NONE_LITERAL,
-        "pendingOrders", 0, LiteralUnlimitedNatural.UNLIMITED,
-        purchaseOrderClass, false, AggregationKind.NONE_LITERAL, "", 0, 1);
-    createAssociation(supplierClass, true, AggregationKind.NONE_LITERAL,
-        "shippedOrders", 0, LiteralUnlimitedNatural.UNLIMITED,
-        purchaseOrderClass, false, AggregationKind.NONE_LITERAL, "", 0, 1);
-    createAssociation(supplierClass, true,
-        AggregationKind.COMPOSITE_LITERAL, "customers", 0,
-        LiteralUnlimitedNatural.UNLIMITED, customerClass, false,
-        AggregationKind.NONE_LITERAL, "", 1, 1);
-    createAssociation(customerClass, true, AggregationKind.NONE_LITERAL,
-        "orders", 0, LiteralUnlimitedNatural.UNLIMITED, purchaseOrderClass,
-        true, AggregationKind.NONE_LITERAL, "customer", 1, 1);
-    createAssociation(purchaseOrderClass, true,
-        AggregationKind.NONE_LITERAL, "previousOrder", 0, 1,
-        purchaseOrderClass, false, AggregationKind.NONE_LITERAL, "", 0, 1);
-    createAssociation(purchaseOrderClass, true,
-        AggregationKind.COMPOSITE_LITERAL, "items", 0,
-        LiteralUnlimitedNatural.UNLIMITED, itemClass, true,
-        AggregationKind.NONE_LITERAL, "order", 1, 1);
-    createAssociation(purchaseOrderClass, true,
-        AggregationKind.COMPOSITE_LITERAL, "billTo", 1, 1, addressClass,
-        false, AggregationKind.NONE_LITERAL, "", 1, 1);
-    createAssociation(purchaseOrderClass, true,
-        AggregationKind.COMPOSITE_LITERAL, "shipTo", 1, 1, addressClass,
-        false, AggregationKind.NONE_LITERAL, "", 1, 1);
 
     return epo2Model;
   }

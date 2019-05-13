@@ -2,6 +2,8 @@ package io.neocdtv.modelling.reverse;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sun.org.apache.xpath.internal.operations.Mod;
+import com.sun.prism.impl.shape.OpenPiscesPrismUtils;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.model.JavaClass;
 import com.thoughtworks.qdox.model.JavaPackage;
@@ -36,18 +38,19 @@ import java.util.logging.Logger;
 public class Main {
 
   private static final Logger LOGGER = Logger.getLogger(Main.class.getCanonicalName());
-
-  private final static ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
-  static {
-    // TODO: add sorting for maps and for attributes
-  }
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   public static void main(String[] args) throws IOException {
 
     final String packageInputConfigsPath = CliUtil.findCommandArgumentByName(CommandParameterNames.PACKAGE_INPUT_CONFIGS, args);
     final String outputDir = CliUtil.findCommandArgumentByName(CommandParameterNames.OUTPUT_DIR, args);
-    if (packageInputConfigsPath == null || outputDir == null) {
+    OutputFormat outputFormat = null;
+    try {
+      outputFormat = OutputFormat.valueOf(CliUtil.findCommandArgumentByName(CommandParameterNames.OUTPUT_FORMAT, args));
+    } catch (Exception e) {
+      LOGGER.severe(e.getMessage());
+    }
+    if (packageInputConfigsPath == null || outputDir == null || outputFormat == null) {
       printUsageAndExit();
     }
 
@@ -56,8 +59,7 @@ public class Main {
     });
     JavaProjectBuilder javaProjectBuilder = configurePackagesForAnalysis(packageInputConfigs);
 
-    String outputRelativePath = "output";
-    String outputDirectory = outputDir + File.separator + outputRelativePath;
+    String outputDirectory = outputDir + File.separator;
     File file = new File(outputDirectory);
     file.mkdir();
 
@@ -65,26 +67,35 @@ public class Main {
     Model model = PackageConverter.transform(qPackages);
     Java2EclipseUml2.toUml(qPackages, model);
     Collection<EPackage> ePackages = UMLUtil.convertToEcore(model.getNearestPackage(), new HashMap<>());
-    ModelSerializer.serializeEcoreJson(ePackages, outputDirectory  + File.separator + "ecore.json");
+
+    switch (outputFormat) {
+      case UML:
+        ModelSerializer.serializeUml(model, buildOutputFormat(outputDirectory, "uml"));
+        break;
+      case ECORE:
+        ModelSerializer.serializeEcore(ePackages, buildOutputFormat(outputDirectory, "ecore"));
+        break;
+      case ECORE_JSON:
+        ModelSerializer.serializeEcoreJson(ePackages, buildOutputFormat(outputDirectory, "json"));
+        break;
+    }
+  }
+
+  private static String buildOutputFormat(final String outputDirectory, final String ending) {
+    String filePath = outputDirectory + "model." + ending;
+    LOGGER.info("Writing file: " + filePath);
+    return filePath;
   }
 
   private static void printUsageAndExit() {
-    System.out.println("usage: java -jar target/java2uml.jar -packageInputConfigs=... -sourceDir=... -outputDir=... [-uml] ");
+    System.out.println("usage: java -jar target/java2uml.jar -packageInputConfigs=... -outputDir=... -outputFormat=UML|ECORE|ECORE_JSON");
     System.out.println("options:");
     //System.out.println("\t-r\trecursive package scanning");
-    System.out.println("\t-uml\tuse Eclipse Uml2 internally instead of Eclipse Ecore (alpha)");
-    System.out.println("example: java -jar target/java2uml.jar -packageInputConfigs=\"packageInputConfigs.json\" -outputDir=.");
+    System.out.println("\tUML\t\toutput eclipse uml");
+    System.out.println("\tECORE\t\toutput eclipse ecore");
+    System.out.println("\tECORE_JSON\toutput eclipse ecore in json format");
+    System.out.println("example: java -jar target/java2uml.jar -packageInputConfigs=\"packageInputConfigs.json\" -outputDir=. -outputFormat=UML");
     System.exit(1);
-  }
-
-  private static void generateUsingUmlModel(String outputFile, java.util.Collection<JavaPackage> packages, java.util.Collection<JavaClass> qClasses) throws java.io.IOException {
-    final Set<org.eclipse.uml2.uml.Package> uPackages = Java2Uml.toUml(packages);
-    serializeUml(outputFile, uPackages, qClasses);
-  }
-
-  private static void generateUsingECoreModel(String outputFile, java.util.Collection<JavaPackage> qPackages) throws java.io.IOException {
-    final Set<EPackage> ePackages = Java2Ecore.toEcore(qPackages);
-    serializeECore(outputFile, ePackages, qPackages);
   }
 
   private static JavaProjectBuilder configurePackagesForAnalysis(List<PackageInputConfig> packageInputConfigs) {
@@ -127,19 +138,5 @@ public class Main {
       }
     }
     return builder;
-  }
-
-  private static void serializeUml(final String outputFile, final Set<org.eclipse.uml2.uml.Package> uPackages, final Collection<JavaClass> qClasses) throws IOException {
-    final String rendererDiagram = Uml2Dot.toDot(uPackages, new HashSet<>(qClasses));
-    FileWriter fw = new FileWriter(outputFile);
-    fw.write(rendererDiagram);
-    fw.flush();
-  }
-
-  private static void serializeECore(final String outputFilel, final Set<EPackage> ePackages, final Collection<JavaPackage> qPackages) throws IOException {
-    final String dot = Ecore2Dot.toDot(ePackages, qPackages);
-    FileWriter fw = new FileWriter(outputFilel);
-    fw.write(dot);
-    fw.flush();
   }
 }

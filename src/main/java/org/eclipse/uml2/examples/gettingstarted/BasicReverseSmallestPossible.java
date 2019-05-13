@@ -26,7 +26,7 @@ import static org.eclipse.uml2.examples.gettingstarted.GettingStartedWithUML2.ou
  * @author xix
  * @since 26.01.19
  */
-public class BasicReverse {
+public class BasicReverseSmallestPossible {
 
   public static final String ECLIPSE_PROJECT_MODEL_PATH = "/home/xix/workspace-eclipse-modeling-current/reversed-models/model/";
   static UMLFactory UML_FACTORY = UMLFactory.eINSTANCE;
@@ -38,56 +38,9 @@ public class BasicReverse {
     Package io = createPackage("io");
     nature.getNestedPackages().add(io);
 
-    // add subpackage to package
-    Package humanity = createPackage("humanity");
-    io.getNestedPackages().add(humanity);
-
-    // add interface to subpackage
-    Interface animal = createInterface("Animal");
-    humanity.getOwnedTypes().add(animal);
-
     // add class to subpackage
     Class human = createClass("Human");
-    humanity.getOwnedTypes().add(human);
-    // add interface realization
-    human.createInterfaceRealization("humanIsAnimal", animal);
 
-    // add class to subpackage
-    Class woman = createClass("Woman");
-    humanity.getOwnedTypes().add(woman);
-    human.createGeneralization(animal);
-
-    // add class to subpackage and add associations from human
-    Class head = createClass("Head");
-    humanity.getOwnedTypes().add(head);
-
-
-
-    // Create associations between our classes.
-    createAssociation(human,
-        true,
-        AggregationKind.NONE_LITERAL,
-        "head",
-        1,
-        1,
-        head,
-        true,
-        AggregationKind.NONE_LITERAL,
-        "head of",
-        0,
-        1);
-
-    Enumeration orderStatusEnumeration = createEnumeration(nature,
-        "OrderStatus");
-
-    createEnumerationLiteral(orderStatusEnumeration, "Pending");
-    createEnumerationLiteral(orderStatusEnumeration, "BackOrder");
-    createEnumerationLiteral(orderStatusEnumeration, "Complete");
-
-    Class humanElement = Uml2Utils.findElement("Nature::io::humanity::Human", nature);
-    System.out.printf(humanElement.getName());
-
-    // convert uml to ecore
     Collection<EPackage> ePackages = UMLUtil.convertToEcore(io, new HashMap<>());
 
     serialize(nature, ePackages);
@@ -95,16 +48,17 @@ public class BasicReverse {
 
   private static void serialize(Model nature, Collection<EPackage> ePackages) {
     ModelSerializer.serializeEcore(ePackages,
-        ECLIPSE_PROJECT_MODEL_PATH + "model-humanity.ecore");
+        ECLIPSE_PROJECT_MODEL_PATH + "model-humanity-min.ecore");
     ModelSerializer.serializeEcoreJson(ePackages,
-        ECLIPSE_PROJECT_MODEL_PATH + "model-humanity.json");
+        ECLIPSE_PROJECT_MODEL_PATH + "model-humanity-min.json");
     ModelSerializer.serializeUml(nature,
-        ECLIPSE_PROJECT_MODEL_PATH + "model-humanity.uml");
+        ECLIPSE_PROJECT_MODEL_PATH + "model-humanity-min.uml");
   }
 
   static Model createModel(String name) {
     Model model = UML_FACTORY.createModel();
     model.setName(name);
+    model.setURI("http://" + name);
 
     out("Model '%s' created.", model.getQualifiedName());
     return model;
@@ -185,7 +139,7 @@ public class BasicReverse {
   }
 
   protected static Enumeration createEnumeration(
-      org.eclipse.uml2.uml.Package uPackage, String name) {
+      Package uPackage, String name) {
 
     Enumeration enumeration = uPackage.createOwnedEnumeration(name);
 
