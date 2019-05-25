@@ -28,9 +28,9 @@ import java.util.stream.Collectors;
  * @author xix
  * @since 29.01.19
  */
-public class PackageConverter {
+public class PackageConverter_v1 {
 
-  final static Logger LOGGER = Logger.getLogger(PackageConverter.class.getName());
+  final static Logger LOGGER = Logger.getLogger(PackageConverter_v1.class.getName());
   final static UMLFactory UML_FACTORY = UMLFactory.eINSTANCE;
   final static String UML_PACKAGE_PATH_SEPARATOR = "::";
   final static String JAVA_PACKAGE_PATH_SEPARATOR = ".";
@@ -38,7 +38,7 @@ public class PackageConverter {
   final static String MODEL_NAME = "model";
 
   public static Model transform(final Collection<JavaPackage> qPackages) {
-    final PackageConverter packageConverter = new PackageConverter();
+    final PackageConverter_v1 packageConverter = new PackageConverter_v1();
     return packageConverter.start(
         qPackages.stream()
             .map(javaPackage -> javaPackage.getName()).collect(Collectors.toList()));
@@ -55,8 +55,8 @@ public class PackageConverter {
 
   Package findPackage(final Model model, final String packagePath) {
     final Package packageTree = getOrCreatePackageTree(model, packagePath);
-    String umlPath = convertJavaPackagePath2UmlPath(model.getName(), splitPackagePath(packagePath));
-    return Uml2Utils.findElement(umlPath, model);
+    String umlPath = convertJavaPackagePath2UmlPath(splitPackagePath(packagePath));
+    return Uml2Utils.findElement(umlPath, packageTree);
   }
 
   /**
@@ -126,6 +126,14 @@ public class PackageConverter {
   String convertJavaPackagePath2UmlPath(final String modelName, final List<String> packagePath) {
     List<String> packagePathWithModelName = new ArrayList<>();
     packagePathWithModelName.add(modelName);
+    packagePathWithModelName.addAll(packagePath);
+    return packagePathWithModelName
+        .stream()
+        .collect(Collectors.joining(UML_PACKAGE_PATH_SEPARATOR));
+  }
+
+  String convertJavaPackagePath2UmlPath(final List<String> packagePath) {
+    List<String> packagePathWithModelName = new ArrayList<>();
     packagePathWithModelName.addAll(packagePath);
     return packagePathWithModelName
         .stream()

@@ -4,14 +4,14 @@ package io.neocdtv.modelling.reverse.domain.customer;
  * @author xix
  */
 public class Customer implements ICustomer {
-  protected int attribute;
+  protected int age;
 
-  public int getAttribute() {
-    return attribute;
+  public int getAge() {
+    return age;
   }
 
-  public void setAttribute(int attribute) {
-    this.attribute = attribute;
+  public void setAge(int age) {
+    this.age = age;
   }
 
   @Override

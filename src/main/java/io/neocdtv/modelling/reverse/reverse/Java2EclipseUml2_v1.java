@@ -20,15 +20,15 @@ import java.util.stream.Collectors;
  * @author xix
  * @since 24.01.19
  */
-public class Java2EclipseUml2 {
+public class Java2EclipseUml2_v1 {
 
   private final static Logger LOGGER = Logger.getLogger(Java2Uml.class.getSimpleName());
   private final static UMLFactory UML_FACTORY = UMLFactory.eINSTANCE;
   private Set<String> visiblePackages;
-  private PackageConverter packageConverter = new PackageConverter();
+  private PackageConverter_v1 packageConverter = new PackageConverter_v1();
 
   public static void toUml(final Collection<JavaPackage> qPackages, final Model model) {
-    Java2EclipseUml2 java2EclipseUml2 = new Java2EclipseUml2();
+    Java2EclipseUml2_v1 java2EclipseUml2 = new Java2EclipseUml2_v1();
     java2EclipseUml2.build(qPackages, model);
   }
 

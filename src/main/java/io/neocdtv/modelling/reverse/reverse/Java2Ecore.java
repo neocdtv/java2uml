@@ -177,7 +177,7 @@ public class Java2Ecore {
   }
 
   private EClass getOrCreateClass(JavaClass javaClass) {
-    EClass referenced = getOrCreateClassifier(javaClass);
+    EClass referenced = findClass(javaClass);
     if (referenced != null) {
       return referenced;
     }
@@ -190,7 +190,7 @@ public class Java2Ecore {
     return referenced;
   }
 
-  private EClass getOrCreateClassifier(JavaClass javaClass) {
+  private EClass findClass(JavaClass javaClass) {
     EClass existing = null;
     EPackage ePackage = getOrCreatePackage(javaClass.getPackageName());
     Set<EClassifier> collectedClassifiers = ePackage.getEClassifiers()

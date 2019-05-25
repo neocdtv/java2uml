@@ -2,33 +2,22 @@ package io.neocdtv.modelling.reverse;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sun.org.apache.xpath.internal.operations.Mod;
-import com.sun.prism.impl.shape.OpenPiscesPrismUtils;
 import com.thoughtworks.qdox.JavaProjectBuilder;
-import com.thoughtworks.qdox.model.JavaClass;
 import com.thoughtworks.qdox.model.JavaPackage;
-import io.neocdtv.modelling.reverse.reverse.Java2EclipseUml2;
-import io.neocdtv.modelling.reverse.reverse.Java2Ecore;
-import io.neocdtv.modelling.reverse.reverse.Java2Uml;
-import io.neocdtv.modelling.reverse.reverse.PackageConverter;
-import io.neocdtv.modelling.reverse.serialization.Ecore2Dot;
-import io.neocdtv.modelling.reverse.serialization.Uml2Dot;
+import io.neocdtv.modelling.reverse.reverse.Java2EclipseUml2_v2;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.uml2.examples.gettingstarted.ModelSerializer;
 import org.eclipse.uml2.uml.Model;
 import org.eclipse.uml2.uml.util.UMLUtil;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -54,19 +43,18 @@ public class Main {
       printUsageAndExit();
     }
 
-    String content = new String(Files.readAllBytes(Paths.get(packageInputConfigsPath)), "UTF-8");
+    final String content = new String(Files.readAllBytes(Paths.get(packageInputConfigsPath)), "UTF-8");
     List<PackageInputConfig> packageInputConfigs = OBJECT_MAPPER.readValue(content, new TypeReference<List<PackageInputConfig>>() {
     });
-    JavaProjectBuilder javaProjectBuilder = configurePackagesForAnalysis(packageInputConfigs);
+    final JavaProjectBuilder javaProjectBuilder = configurePackagesForAnalysis(packageInputConfigs);
 
-    String outputDirectory = outputDir + File.separator;
-    File file = new File(outputDirectory);
+    final String outputDirectory = outputDir + File.separator;
+    final File file = new File(outputDirectory);
     file.mkdir();
 
-    Collection<JavaPackage> qPackages = javaProjectBuilder.getPackages();
-    Model model = PackageConverter.transform(qPackages);
-    Java2EclipseUml2.toUml(qPackages, model);
-    Collection<EPackage> ePackages = UMLUtil.convertToEcore(model.getNearestPackage(), new HashMap<>());
+    final Collection<JavaPackage> qPackages = javaProjectBuilder.getPackages();
+    final Model model = Java2EclipseUml2_v2.toUml(qPackages, "simpleModel");
+    final Collection<EPackage> ePackages = UMLUtil.convertToEcore(model.getNearestPackage(), new HashMap<>());
 
     switch (outputFormat) {
       case UML:
@@ -82,7 +70,7 @@ public class Main {
   }
 
   private static String buildOutputFormat(final String outputDirectory, final String ending) {
-    String filePath = outputDirectory + "model." + ending;
+    final String filePath = outputDirectory + "model-main." + ending;
     LOGGER.info("Writing file: " + filePath);
     return filePath;
   }

@@ -140,10 +140,17 @@ public class GettingStartedWithUML2 {
     banner("Creating associations between model classes.");
 
     // Create associations between our classes.
-    createAssociation(supplierClass, true,
-        AggregationKind.COMPOSITE_LITERAL, "orders", 0,
-        LiteralUnlimitedNatural.UNLIMITED, purchaseOrderClass, false,
-        AggregationKind.NONE_LITERAL, "", 1, 1);
+    createAssociation(
+        supplierClass,
+        false,
+        AggregationKind.NONE_LITERAL,
+        "orders", 0,
+        LiteralUnlimitedNatural.UNLIMITED,
+        purchaseOrderClass,
+        false,
+        AggregationKind.NONE_LITERAL,
+        "",
+        1, 1);
     createAssociation(supplierClass, true, AggregationKind.NONE_LITERAL,
         "pendingOrders", 0, LiteralUnlimitedNatural.UNLIMITED,
         purchaseOrderClass, false, AggregationKind.NONE_LITERAL, "", 0, 1);
@@ -263,7 +270,7 @@ public class GettingStartedWithUML2 {
         lowerBound, upperBound);
 
     out("Attribute '%s' : %s [%s..%s] created.", //
-        attribute.getQualifiedName(), // attribute name
+        attribute.getQualifiedName(), // age name
         type.getQualifiedName(), // type name
         lowerBound, // no special case for multiplicity lower bound
         (upperBound == LiteralUnlimitedNatural.UNLIMITED)

@@ -169,7 +169,7 @@ public class GettingStartedWithUML2SmallestPossible {
         lowerBound, upperBound);
 
     out("Attribute '%s' : %s [%s..%s] created.", //
-        attribute.getQualifiedName(), // attribute name
+        attribute.getQualifiedName(), // age name
         type.getQualifiedName(), // type name
         lowerBound, // no special case for multiplicity lower bound
         (upperBound == LiteralUnlimitedNatural.UNLIMITED)

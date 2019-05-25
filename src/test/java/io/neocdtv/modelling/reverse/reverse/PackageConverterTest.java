@@ -8,10 +8,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static io.neocdtv.modelling.reverse.reverse.PackageConverter.JAVA_PACKAGE_PATH_SEPARATOR;
-import static io.neocdtv.modelling.reverse.reverse.PackageConverter.JAVA_PACKAGE_PATH_SEPARATOR_REGEX;
-import static io.neocdtv.modelling.reverse.reverse.PackageConverter.MODEL_NAME;
-import static io.neocdtv.modelling.reverse.reverse.PackageConverter.UML_PACKAGE_PATH_SEPARATOR;
+import static io.neocdtv.modelling.reverse.reverse.PackageConverter_v1.JAVA_PACKAGE_PATH_SEPARATOR;
+import static io.neocdtv.modelling.reverse.reverse.PackageConverter_v1.JAVA_PACKAGE_PATH_SEPARATOR_REGEX;
+import static io.neocdtv.modelling.reverse.reverse.PackageConverter_v1.MODEL_NAME;
+import static io.neocdtv.modelling.reverse.reverse.PackageConverter_v1.UML_PACKAGE_PATH_SEPARATOR;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -27,12 +27,12 @@ public class PackageConverterTest {
   private static final String TWO_PATH_PACKAGE = ONE_PATH_PACKAGE + JAVA_PACKAGE_PATH_SEPARATOR + LEVEL_TWO;
   private static final String THREE_PATH_PACKAGE = TWO_PATH_PACKAGE + JAVA_PACKAGE_PATH_SEPARATOR + LEVEL_THREE;
 
-  private static final String ONE_PATH_PACKAGE_UML = PackageConverter.LOGGER + UML_PACKAGE_PATH_SEPARATOR + LEVEL_ONE;
+  private static final String ONE_PATH_PACKAGE_UML = PackageConverter_v1.LOGGER + UML_PACKAGE_PATH_SEPARATOR + LEVEL_ONE;
   private static final String TWO_PATH_PACKAGE_UML = MODEL_NAME + UML_PACKAGE_PATH_SEPARATOR + ONE_PATH_PACKAGE + UML_PACKAGE_PATH_SEPARATOR + LEVEL_TWO;
 
   private static final String THREE_PATH_PACKAGE_UML = TWO_PATH_PACKAGE_UML + UML_PACKAGE_PATH_SEPARATOR + LEVEL_THREE;
 
-  private PackageConverter packageConverter = new PackageConverter();
+  private PackageConverter_v1 packageConverter = new PackageConverter_v1();
 
   @Test
   public void transform() {

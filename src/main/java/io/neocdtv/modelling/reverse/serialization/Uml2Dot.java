@@ -205,7 +205,7 @@ public class Uml2Dot {
   }
 
   private void doAttribute(StringBuilder dot, Property eAttribute) {
-    //dot.append(doVisibility(attribute.getVisibility()));
+    //dot.append(doVisibility(age.getVisibility()));
     //dot.append(" ");
     dot.append(eAttribute.getName());
     dot.append(" : ");
