@@ -3,27 +3,13 @@ COMMON:
 packages.json
 - sort packages by name
 - sort attributes by name
-- package.json on windows is generated wrong change to / instead of \\
 - add clusters to simplify diagrams
 
 ECORE
-- remove duplication from model
 - check if the model is build correctly, how?
-- ask about EEnums on eclipse forum, and how to add generalization
-
-UML 2 ECORE
-- does this conversion make sense?
-
-uml-io:
-- find primitive types with search API - is not implemented
-- what are exactly prmitive types in UML: is String, Date, int all primitives
-- why should somebody put primitive type on top level of the model see: GettingStartedWithUML2, just an abstration
 
 export:
 - check magic draw import:
     - ecore
     - uml (xmi)
-
-Eclipse UML2 (BasicReverse):
-- create directed associations with multiplicity
 
