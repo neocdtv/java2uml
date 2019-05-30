@@ -17,7 +17,7 @@ public class Offer {
   private boolean aBoolean;
   private int anInt;
   private Set<Price> prices;
-  //private ICustomer contactPerson;
-  //private ICustomer conditionProvider;
+  private ICustomer contactPerson;
+  private ICustomer conditionProvider;
   private Payment payment;
 }
