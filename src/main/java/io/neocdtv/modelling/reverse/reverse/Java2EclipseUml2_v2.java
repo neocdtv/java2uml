@@ -71,7 +71,6 @@ public class Java2EclipseUml2_v2 {
           uPackage.getOwnedTypes().add(uEnum);
         } else {
           final Class uClass = getOrCreateClass(qClass, model);
-          uPackage.getOwnedTypes().add(uClass);
           // TODO: add generalizations
           // TODO: add interface realizations
         }
@@ -127,10 +126,13 @@ public class Java2EclipseUml2_v2 {
       return existingClass;
     }
 
-    if (!qClass.isInterface() && isTypeVisible(qClass)) {
-      return createClass(qClass, model);
+    // TODO: !qClass.isInterface()
+    if (isTypeVisible(qClass)) {
+      Class uClass = createClass(qClass, model);
+      return uClass;
     } else {
-      return createClassWithoutAttributes(qClass, model);
+      Class classWithoutAttributes = createClassWithoutAttributes(qClass, model);
+      return classWithoutAttributes;
     }
   }
 
@@ -152,7 +154,6 @@ public class Java2EclipseUml2_v2 {
       final JavaClass fieldType = field.getType();
 
       // TODO: handle maps; maps in uml?
-      // TODO: handle EEnum
       try {
         if (fieldType.isArray()) {
 
@@ -160,14 +161,26 @@ public class Java2EclipseUml2_v2 {
           final List<JavaType> actualTypeArguments = ((DefaultJavaParameterizedType) fieldType).getActualTypeArguments();
           final DefaultJavaType genericTypeVariable = (DefaultJavaType) actualTypeArguments.get(0);
         } else {
-          final Class referenced = getOrCreateClass(fieldType, model);
-          referenced.getPackage().getOwnedTypes().add(referenced);
-          createAssociation(uClass, true, AggregationKind.NONE_LITERAL,
-              field.getName(), 1, 1,
-              referenced, false, AggregationKind.NONE_LITERAL, "", 0, 1);
+          // TODO: add enum support
+          if (!field.getType().isEnum()) {
+            final Class referenced = getOrCreateClass(fieldType, model);
+            createAssociation(uClass,
+                true,
+                AggregationKind.NONE_LITERAL,
+                field.getName(),
+                1,
+                1,
+                referenced,
+                false,
+                AggregationKind.NONE_LITERAL,
+                "",
+                0,
+                1);
+          }
         }
-      } catch (NullPointerException e) {
-        LOGGER.severe(e.getMessage());
+      } catch (Exception e) {
+        e.printStackTrace();
+
       }
     }
   }
@@ -296,6 +309,7 @@ public class Java2EclipseUml2_v2 {
     Class uClass = UML_FACTORY.createClass();
     uClass.setName(qClass.getName());
     out.println(String.format("Class '%s' created.", uClass.getQualifiedName()));
+    addToPackage(model, qClass.getPackageName(), uClass);
     return uClass;
   }
 

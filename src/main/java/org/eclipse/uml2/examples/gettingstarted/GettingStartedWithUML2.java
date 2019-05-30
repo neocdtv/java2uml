@@ -151,9 +151,21 @@ public class GettingStartedWithUML2 {
         AggregationKind.NONE_LITERAL,
         "",
         1, 1);
-    createAssociation(supplierClass, true, AggregationKind.NONE_LITERAL,
-        "pendingOrders", 0, LiteralUnlimitedNatural.UNLIMITED,
-        purchaseOrderClass, false, AggregationKind.NONE_LITERAL, "", 0, 1);
+
+    createAssociation(
+        supplierClass,
+        true,
+        AggregationKind.NONE_LITERAL,
+        "pendingOrders",
+        0,
+        LiteralUnlimitedNatural.UNLIMITED,
+        purchaseOrderClass,
+        false,
+        AggregationKind.NONE_LITERAL,
+        "",
+        0,
+        1);
+
     createAssociation(supplierClass, true, AggregationKind.NONE_LITERAL,
         "shippedOrders", 0, LiteralUnlimitedNatural.UNLIMITED,
         purchaseOrderClass, false, AggregationKind.NONE_LITERAL, "", 0, 1);
