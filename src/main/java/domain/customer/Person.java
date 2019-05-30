@@ -1,6 +1,6 @@
-package io.neocdtv.modelling.reverse.domain.customer;
+package domain.customer;
 
-import io.neocdtv.modelling.reverse.domain.customer.address.Address;
+import domain.customer.address.Address;
 
 /**
  * @author xix

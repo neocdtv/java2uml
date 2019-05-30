@@ -1,4 +1,4 @@
-package io.neocdtv.modelling.reverse.domain.offer;
+package domain.offer;
 
 /**
  * @author xix

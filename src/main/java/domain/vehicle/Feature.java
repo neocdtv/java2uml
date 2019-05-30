@@ -1,4 +1,4 @@
-package io.neocdtv.modelling.reverse.domain.vehicle;
+package domain.vehicle;
 
 /**
  * @author xix

@@ -156,10 +156,42 @@ public class Java2EclipseUml2_v2 {
       // TODO: handle maps; maps in uml?
       try {
         if (fieldType.isArray()) {
-
+          if (!field.getType().isEnum()) {
+            JavaClass componentType = fieldType.getComponentType();
+            Class referenced = getOrCreateClass(componentType, model);
+            createAssociation(uClass,
+                true,
+                AggregationKind.NONE_LITERAL,
+                field.getName(),
+                0,
+                LiteralUnlimitedNatural.UNLIMITED,
+                referenced,
+                false,
+                AggregationKind.NONE_LITERAL,
+                "",
+                0,
+                1);
+          }
         } else if (fieldType.isA(Collection.class.getName())) {
-          final List<JavaType> actualTypeArguments = ((DefaultJavaParameterizedType) fieldType).getActualTypeArguments();
-          final DefaultJavaType genericTypeVariable = (DefaultJavaType) actualTypeArguments.get(0);
+          if (!field.getType().isEnum()) {
+            final List<JavaType> actualTypeArguments = ((DefaultJavaParameterizedType) fieldType).getActualTypeArguments();
+            final DefaultJavaType genericTypeVariable = (DefaultJavaType) actualTypeArguments.get(0);
+            Class referenced = getOrCreateClass(genericTypeVariable, model);
+
+            createAssociation(uClass,
+                true,
+                AggregationKind.NONE_LITERAL,
+                field.getName(),
+                0,
+                LiteralUnlimitedNatural.UNLIMITED,
+                referenced,
+                false,
+                AggregationKind.NONE_LITERAL,
+                "",
+                0,
+                1);
+          }
+
         } else {
           // TODO: add enum support
           if (!field.getType().isEnum()) {
@@ -184,42 +216,6 @@ public class Java2EclipseUml2_v2 {
       }
     }
   }
-
-  /*
-  private Class getOrcreateClassOld(final JavaClass qClass, final Model model, final Package uPackage) {
-    Class uClass = createClassWithoutAttributes(qClass, model);
-    uPackage.getOwnedTypes().add(uClass);
-    if (isTypeVisible(qClass)) {
-      qClass.getFields().forEach(field -> {
-        JavaClass type = field.getType();
-        if (isPrimitiveType(type)) {
-          PrimitiveType primitiveAttribute = getOrCreatePrimitiveAttribute(field, model);
-          buildAttribute(uClass, field.getName(), primitiveAttribute, 1, 1);
-        } else {
-          Classifier dependentClassifier;
-          if (qClass.isEnum()) {
-            dependentClassifier = getOrCreateEnum(field.getType());
-          } else {
-            dependentClassifier = getOrcreateClass(field.getType(), model, uPackage);
-          }
-          createAssociation(
-              uClass,
-              false,
-              AggregationKind.NONE_LITERAL,
-              field.getName(), 0,
-              LiteralUnlimitedNatural.UNLIMITED,
-              dependentClassifier,
-              false,
-              AggregationKind.NONE_LITERAL,
-              "",
-              1, 1);
-          // create dependency
-        }
-      });
-    }
-    return uClass;
-  }
-  */
 
   // handle multiplicity for arrays, lists and sets. Maps?
   protected Property buildAttribute(

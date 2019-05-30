@@ -1,7 +1,7 @@
-package io.neocdtv.modelling.reverse.domain.customer;
+package domain.customer;
 
-import io.neocdtv.modelling.reverse.domain.customer.address.Address;
-import io.neocdtv.modelling.reverse.domain.customer.organisation.OrgType;
+import domain.customer.address.Address;
+import domain.customer.organisation.OrgType;
 
 import java.util.List;
 import java.util.Map;

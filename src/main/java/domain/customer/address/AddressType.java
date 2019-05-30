@@ -1,4 +1,4 @@
-package io.neocdtv.modelling.reverse.domain.customer.address;
+package domain.customer.address;
 
 /**
  * @author xix

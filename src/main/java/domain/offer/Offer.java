@@ -1,7 +1,7 @@
-package io.neocdtv.modelling.reverse.domain.offer;
+package domain.offer;
 
-import io.neocdtv.modelling.reverse.domain.customer.ICustomer;
-import io.neocdtv.modelling.reverse.domain.vehicle.Car;
+import domain.customer.ICustomer;
+import domain.vehicle.Car;
 
 import java.util.Date;
 import java.util.Set;
