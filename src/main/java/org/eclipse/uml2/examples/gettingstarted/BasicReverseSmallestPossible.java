@@ -20,7 +20,7 @@ import org.eclipse.uml2.uml.util.UMLUtil;
 import java.util.Collection;
 import java.util.HashMap;
 
-import static org.eclipse.uml2.examples.gettingstarted.GettingStartedWithUML2.out;
+import static org.eclipse.uml2.examples.gettingstarted.GettingStartedWithUML2_.out;
 
 /**
  * @author xix

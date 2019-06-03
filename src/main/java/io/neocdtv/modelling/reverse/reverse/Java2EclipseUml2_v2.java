@@ -8,9 +8,6 @@ import com.thoughtworks.qdox.model.impl.DefaultJavaParameterizedType;
 import com.thoughtworks.qdox.model.impl.DefaultJavaType;
 import org.batchjob.uml.io.exception.NotFoundException;
 import org.batchjob.uml.io.utils.Uml2Utils;
-import org.eclipse.emf.ecore.EClass;
-import org.eclipse.emf.ecore.EReference;
-import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.uml2.common.util.UML2Util;
 import org.eclipse.uml2.uml.AggregationKind;
 import org.eclipse.uml2.uml.Association;
@@ -31,6 +28,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -40,7 +38,10 @@ import static java.lang.System.out;
 
 /**
  * @author xix
+ * @see http://wiki.eclipse.org/MDT/UML2/Getting_Started_with_UML2
  * @since 24.01.19
+ * <p>
+ * Resources used:
  */
 public class Java2EclipseUml2_v2 {
 
@@ -63,12 +64,10 @@ public class Java2EclipseUml2_v2 {
     for (JavaPackage qPackage : qPackages) {
       String packagePath = qPackage.getName();
       visiblePackages.add(packagePath);
-      Package uPackage = findPackage(model, packagePath);
       final Collection<JavaClass> qClasses = qPackage.getClasses();
       for (JavaClass qClass : qClasses) {
         if (qClass.isEnum()) {
-          final Enumeration uEnum = getOrCreateEnum(qClass);
-          uPackage.getOwnedTypes().add(uEnum);
+          final Enumeration uEnum = getOrCreateEnum(qClass, model);
         } else {
           final Class uClass = getOrCreateClass(qClass, model);
           // TODO: add generalizations
@@ -79,17 +78,30 @@ public class Java2EclipseUml2_v2 {
     return model;
   }
 
+  // TODO: unify findClass and finaEnum  to findType, use generics
   private Class findClass(JavaClass qClass, Model model) {
     try {
       findPackage(model, qClass.getPackageName());
-      String umlClassPath = convertJavaClassPath2UmlClassPath(model.getName(), splitPackagePath(qClass.getPackageName()), qClass.getName());
-      // TODO: Exception in thread "main" java.lang.ClassCastException: org.eclipse.uml2.uml.internal.impl.EnumerationImpl cannot be cast to org.eclipse.uml2.uml.Class
-      // TODO: add enum support
+      String umlClassPath = convertJavaTypePath2UmlTypePath(model.getName(), splitPackagePath(qClass.getPackageName()), qClass.getName());
       Class uClass = Uml2Utils.findElement(umlClassPath, model);
       out.println(String.format("Class '%s' found.", qClass.getFullyQualifiedName()));
       return uClass;
     } catch (NotFoundException notFoundException) {
       out.println(String.format("Class '%s' not found.", qClass.getFullyQualifiedName()));
+      return null;
+    }
+  }
+
+  // TODO: unify findClass and finaEnum  to findType, use generics
+  private Enumeration findEnum(JavaClass qClass, Model model) {
+    try {
+      findPackage(model, qClass.getPackageName());
+      String umlEnumPath = convertJavaTypePath2UmlTypePath(model.getName(), splitPackagePath(qClass.getPackageName()), qClass.getName());
+      Enumeration uType = Uml2Utils.findElement(umlEnumPath, model);
+      out.println(String.format("Enum '%s' found.", qClass.getFullyQualifiedName()));
+      return uType;
+    } catch (NotFoundException notFoundException) {
+      out.println(String.format("Enum '%s' not found.", qClass.getFullyQualifiedName()));
       return null;
     }
   }
@@ -100,13 +112,25 @@ public class Java2EclipseUml2_v2 {
     return model;
   }
 
-  private Enumeration getOrCreateEnum(final JavaClass qClass) {
-    Enumeration uEnum = UML_FACTORY.createEnumeration();
+  private Enumeration getOrCreateEnum(final JavaClass qClass, final Model model) {
+    Enumeration existingClass = findEnum(qClass, model);
+    if (existingClass != null) {
+      return existingClass;
+    }
+
+    return createEnum(qClass, model);
+    // TODO: implement isTypeVisible(qClass) here also?
+
+  }
+
+  private Enumeration createEnum(final JavaClass qClass, final Model model) {
+    final Enumeration uEnum = UML_FACTORY.createEnumeration();
     uEnum.setName(qClass.getName());
     out.println(String.format("Enumeration '%s' created.", uEnum.getQualifiedName()));
     qClass.getEnumConstants().forEach(enumConstant -> {
       createEnumerationLiteral(uEnum, enumConstant.getName());
     });
+    addToPackage(model, qClass.getPackageName(), uEnum);
     return uEnum;
   }
 
@@ -126,7 +150,6 @@ public class Java2EclipseUml2_v2 {
       return existingClass;
     }
 
-    // TODO: !qClass.isInterface()
     if (isTypeVisible(qClass)) {
       Class uClass = createClass(qClass, model);
       return uClass;
@@ -153,62 +176,21 @@ public class Java2EclipseUml2_v2 {
     if (!field.isEnumConstant()) { // COMMENT: omit dependency from enum constants to the same enum
       final JavaClass fieldType = field.getType();
 
-      // TODO: handle maps; maps in uml?
       try {
         if (fieldType.isArray()) {
-          if (!field.getType().isEnum()) {
-            JavaClass componentType = fieldType.getComponentType();
-            Class referenced = getOrCreateClass(componentType, model);
-            createAssociation(uClass,
-                true,
-                AggregationKind.NONE_LITERAL,
-                field.getName(),
-                0,
-                LiteralUnlimitedNatural.UNLIMITED,
-                referenced,
-                false,
-                AggregationKind.NONE_LITERAL,
-                "",
-                0,
-                1);
-          }
-        } else if (fieldType.isA(Collection.class.getName())) {
-          if (!field.getType().isEnum()) {
-            final List<JavaType> actualTypeArguments = ((DefaultJavaParameterizedType) fieldType).getActualTypeArguments();
-            final DefaultJavaType genericTypeVariable = (DefaultJavaType) actualTypeArguments.get(0);
-            Class referenced = getOrCreateClass(genericTypeVariable, model);
-
-            createAssociation(uClass,
-                true,
-                AggregationKind.NONE_LITERAL,
-                field.getName(),
-                0,
-                LiteralUnlimitedNatural.UNLIMITED,
-                referenced,
-                false,
-                AggregationKind.NONE_LITERAL,
-                "",
-                0,
-                1);
-          }
-
+          JavaClass componentType = fieldType.getComponentType();
+          Type referenced = getOrCreateType(model, componentType);
+          addDependencyWithMultiplicityMany(uClass, field, referenced);
+        } else if (fieldType.isA(Collection.class.getName())) { // is this check sufficient, will subtypes like HashSet be recognized
+          final List<JavaType> actualTypeArguments = ((DefaultJavaParameterizedType) fieldType).getActualTypeArguments();
+          final DefaultJavaType componentType = (DefaultJavaType) actualTypeArguments.get(0);
+          Type referenced = getOrCreateType(model, componentType);
+          addDependencyWithMultiplicityMany(uClass, field, referenced);
+        } else if (fieldType.isA(Map.class.getName())) { // is this check sufficient, will subtypes like HashMap be recognized
+          // TODO: handle maps; maps in uml?
         } else {
-          // TODO: add enum support
-          if (!field.getType().isEnum()) {
-            final Class referenced = getOrCreateClass(fieldType, model);
-            createAssociation(uClass,
-                true,
-                AggregationKind.NONE_LITERAL,
-                field.getName(),
-                1,
-                1,
-                referenced,
-                false,
-                AggregationKind.NONE_LITERAL,
-                "",
-                0,
-                1);
-          }
+          Type referenced = getOrCreateType(model, fieldType);
+          buildDependencyWithMultiplicityOne(uClass, field, referenced);
         }
       } catch (Exception e) {
         e.printStackTrace();
@@ -217,7 +199,47 @@ public class Java2EclipseUml2_v2 {
     }
   }
 
-  // handle multiplicity for arrays, lists and sets. Maps?
+  private Type getOrCreateType(Model model, JavaClass componentType) {
+    Type referenced;
+    if (componentType.isEnum()) {
+      referenced = getOrCreateEnum(componentType, model);
+    } else {
+      referenced = getOrCreateClass(componentType, model);
+    }
+    return referenced;
+  }
+
+  private void buildDependencyWithMultiplicityOne(Class uType, JavaField field, Type referenced) {
+    createAssociation(uType,
+        true,
+        AggregationKind.NONE_LITERAL,
+        field.getName(),
+        1,
+        1,
+        referenced,
+        false,
+        AggregationKind.NONE_LITERAL,
+        "",
+        0,
+        1);
+  }
+
+  private void addDependencyWithMultiplicityMany(Type uType, JavaField field, Type referenced) {
+    createAssociation(uType,
+        true,
+        AggregationKind.NONE_LITERAL,
+        field.getName(),
+        0,
+        LiteralUnlimitedNatural.UNLIMITED,
+        referenced,
+        false,
+        AggregationKind.NONE_LITERAL,
+        "",
+        0,
+        1);
+  }
+
+  // TODO: handle multiplicity for arrays, lists and sets. Maps? How are they represented in uml?-
   protected Property buildAttribute(
       final Model model,
       final Class uClass,
@@ -405,7 +427,7 @@ public class Java2EclipseUml2_v2 {
         .collect(Collectors.joining(UML_PACKAGE_PATH_SEPARATOR));
   }
 
-  String convertJavaClassPath2UmlClassPath(final String modelName, final List<String> packagePath, final String className) {
+  String convertJavaTypePath2UmlTypePath(final String modelName, final List<String> packagePath, final String className) {
     final List<String> path = new ArrayList<>();
     path.add(modelName);
     path.addAll(packagePath);

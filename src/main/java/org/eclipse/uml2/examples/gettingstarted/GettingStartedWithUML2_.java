@@ -40,7 +40,7 @@ import java.util.HashMap;
  *
  * @see http://wiki.eclipse.org/MDT/UML2/Getting_Started_with_UML2
  */
-public class GettingStartedWithUML2 {
+public class GettingStartedWithUML2_ {
 
   public static boolean DEBUG = true;
 
