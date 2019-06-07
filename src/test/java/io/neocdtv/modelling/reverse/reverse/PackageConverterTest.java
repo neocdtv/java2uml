@@ -18,6 +18,7 @@ import static org.junit.Assert.assertEquals;
  * @author xix
  * @since 14.02.19
  */
+@Deprecated
 public class PackageConverterTest {
 
   private static final String LEVEL_ONE = "io";

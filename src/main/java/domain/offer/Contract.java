@@ -1,9 +1,11 @@
 package domain.offer;
 
+import domain.SalesStep;
+
 /**
  * @author xix
  */
-public class Contract {
+public class Contract extends SalesStep{
   private Offer offer;
   private String status;
 

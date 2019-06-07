@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 /**
  * @author xix
  */
+@Deprecated
 public class Java2Ecore {
 
   private final static Logger LOGGER = Logger.getLogger(Java2Ecore.class.getSimpleName());

@@ -4,6 +4,7 @@ package io.neocdtv.modelling.reverse.serialization;
  * @author xix
  * @since 20.11.18
  */
+@Deprecated
 public class PackageLink {
   private final String marker = "PACKAGE_LINK";
   private String name;

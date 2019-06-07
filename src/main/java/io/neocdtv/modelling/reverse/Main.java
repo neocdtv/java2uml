@@ -4,9 +4,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.model.JavaPackage;
-import io.neocdtv.modelling.reverse.reverse.Java2EclipseUml2_v2;
+import io.neocdtv.modelling.reverse.reverse.Java2EclipseUml2;
 import org.eclipse.emf.ecore.EPackage;
-import org.eclipse.uml2.examples.gettingstarted.ModelSerializer;
+import io.neocdtv.modelling.reverse.serialization.ModelSerializer;
 import org.eclipse.uml2.uml.Model;
 import org.eclipse.uml2.uml.util.UMLUtil;
 
@@ -53,7 +53,7 @@ public class Main {
     file.mkdir();
 
     final Collection<JavaPackage> qPackages = javaProjectBuilder.getPackages();
-    final Model model = Java2EclipseUml2_v2.toUml(qPackages, "simpleModel");
+    final Model model = Java2EclipseUml2.toUml(qPackages, "simpleModel");
     final Collection<EPackage> ePackages = UMLUtil.convertToEcore(model.getNearestPackage(), new HashMap<>());
 
     switch (outputFormat) {

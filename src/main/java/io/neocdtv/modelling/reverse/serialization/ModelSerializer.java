@@ -1,4 +1,4 @@
-package org.eclipse.uml2.examples.gettingstarted;
+package io.neocdtv.modelling.reverse.serialization;
 
 import org.batchjob.uml.io.utils.Uml2Utils;
 import org.eclipse.emf.common.util.URI;

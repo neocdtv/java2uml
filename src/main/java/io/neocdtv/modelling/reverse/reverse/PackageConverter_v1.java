@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
  * @author xix
  * @since 29.01.19
  */
+@Deprecated
 public class PackageConverter_v1 {
 
   final static Logger LOGGER = Logger.getLogger(PackageConverter_v1.class.getName());

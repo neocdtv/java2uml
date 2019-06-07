@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+@Deprecated
 public class Ecore2Dot {
 
   private static final Logger LOGGER = Logger.getLogger(Ecore2Dot.class.getName());

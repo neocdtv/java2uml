@@ -8,12 +8,15 @@ import com.thoughtworks.qdox.model.impl.DefaultJavaParameterizedType;
 import com.thoughtworks.qdox.model.impl.DefaultJavaType;
 import org.batchjob.uml.io.exception.NotFoundException;
 import org.batchjob.uml.io.utils.Uml2Utils;
+import org.eclipse.emf.ecore.EClass;
 import org.eclipse.uml2.common.util.UML2Util;
 import org.eclipse.uml2.uml.AggregationKind;
 import org.eclipse.uml2.uml.Association;
 import org.eclipse.uml2.uml.Class;
+import org.eclipse.uml2.uml.Classifier;
 import org.eclipse.uml2.uml.Enumeration;
 import org.eclipse.uml2.uml.EnumerationLiteral;
+import org.eclipse.uml2.uml.Generalization;
 import org.eclipse.uml2.uml.LiteralUnlimitedNatural;
 import org.eclipse.uml2.uml.Model;
 import org.eclipse.uml2.uml.Package;
@@ -40,12 +43,11 @@ import static java.lang.System.out;
  * @author xix
  * @see http://wiki.eclipse.org/MDT/UML2/Getting_Started_with_UML2
  * @since 24.01.19
- * <p>
- * Resources used:
+ *
  */
-public class Java2EclipseUml2_v2 {
+public class Java2EclipseUml2 {
 
-  private final static Logger LOGGER = Logger.getLogger(Java2EclipseUml2_v2.class.getSimpleName());
+  private final static Logger LOGGER = Logger.getLogger(Java2EclipseUml2.class.getSimpleName());
   // classifiers contained in visiblePackages will be built completely i.e. with all attributed and associations
   final static UMLFactory UML_FACTORY = UMLFactory.eINSTANCE;
   final static String UML_PACKAGE_PATH_SEPARATOR = "::";
@@ -55,7 +57,7 @@ public class Java2EclipseUml2_v2 {
   // the rest will be just included in the model to build references from visiblePackages classifiers
 
   public static Model toUml(final Collection<JavaPackage> qPackages, final String modelName) {
-    final Java2EclipseUml2_v2 java2EclipseUml2 = new Java2EclipseUml2_v2();
+    final Java2EclipseUml2 java2EclipseUml2 = new Java2EclipseUml2();
     return java2EclipseUml2.convert(qPackages, modelName);
   }
 
@@ -70,15 +72,63 @@ public class Java2EclipseUml2_v2 {
           final Enumeration uEnum = getOrCreateEnum(qClass, model);
         } else {
           final Class uClass = getOrCreateClass(qClass, model);
-          // TODO: add generalizations
-          // TODO: add interface realizations
+          buildGeneralizationRelations(uClass, qClass, model);
         }
       }
     }
     return model;
   }
 
-  // TODO: unify findClass and finaEnum  to findType, use generics
+  private void buildGeneralizationRelations(final Class uClass, final JavaClass qClass, final Model model) {
+    final List<JavaClass> implementedInterfaces = qClass.getInterfaces();
+    buildInterfaceImplementation(implementedInterfaces, uClass, model);
+    buildSuperClass(uClass, qClass, model);
+  }
+
+  private void buildSuperClass(final Class specificClassifier, final JavaClass qClass, final Model model) {
+    final JavaClass superQClass = qClass.getSuperJavaClass();
+    if (determineIfSuperClassShouldBeIncluded(superQClass)) {
+      LOGGER.info("building relation to super class: " + superQClass.getCanonicalName() + " from: " + qClass.getClass().getCanonicalName());
+      Class generalClassifier = getOrCreateClass(superQClass, model);
+      createGeneralization(specificClassifier, generalClassifier);
+    } else {
+      LOGGER.info("not building super class: " + superQClass != null ? null : superQClass.getCanonicalName() + " for: " + qClass.getClass().getCanonicalName());
+    }
+  }
+
+  protected static Generalization createGeneralization(
+      Classifier specificClassifier, Classifier generalClassifier) {
+
+    Generalization generalization = specificClassifier
+        .createGeneralization(generalClassifier);
+
+    out.println(String.format("Generalization %s --|> %s created.",
+        specificClassifier.getQualifiedName(),
+        generalClassifier.getQualifiedName()));
+
+    return generalization;
+  }
+
+
+  private void buildInterfaceImplementation(final List<JavaClass> implementedInterfaces, final Class uClass, final Model model) {
+    /*
+    for (JavaClass implementedInterface : implementedInterfaces) {
+      final String canonicalName = implementedInterface.getCanonicalName();
+      LOGGER.info("building interface: " + canonicalName + " for: " + eClass.getInstanceClassName());
+      LOGGER.info("building interface realization relation to interface: " + canonicalName + " from: " + eClass.getInstanceClassName());
+      EClass eInterface = getOrCreateClass(implementedInterface);
+      eInterface.setInterface(true);
+      eClass.getESuperTypes().add(eInterface);
+    }
+    */
+  }
+
+  private boolean determineIfSuperClassShouldBeIncluded(final JavaClass superJavaClass) {
+    return superJavaClass != null && !superJavaClass.isPrimitive(); // CHECK: && !isJavaLibraryType(superJavaClass);
+  }
+
+
+  // TODO: unify findClass and finaEnum  to findType, use generics?
   private Class findClass(JavaClass qClass, Model model) {
     try {
       findPackage(model, qClass.getPackageName());
@@ -92,7 +142,7 @@ public class Java2EclipseUml2_v2 {
     }
   }
 
-  // TODO: unify findClass and finaEnum  to findType, use generics
+  // TODO: unify findClass and finaEnum  to findType, use generics?
   private Enumeration findEnum(JavaClass qClass, Model model) {
     try {
       findPackage(model, qClass.getPackageName());
@@ -119,7 +169,7 @@ public class Java2EclipseUml2_v2 {
     }
 
     return createEnum(qClass, model);
-    // TODO: implement isTypeVisible(qClass) here also?
+    // TODO: implement isTypeVisible(qClass) here also? this will result in a enum w/o literals
 
   }
 
@@ -173,7 +223,7 @@ public class Java2EclipseUml2_v2 {
   }
 
   private void buildDependency(final Class uClass, JavaField field, Model model) {
-    if (!field.isEnumConstant()) { // COMMENT: omit dependency from enum constants to the same enum
+    if (!field.isEnumConstant()) { // omit dependency from enum constants to the same enum.
       final JavaClass fieldType = field.getType();
 
       try {
@@ -342,8 +392,16 @@ public class Java2EclipseUml2_v2 {
   }
 
   Package findPackage(final Model model, final String packagePath) {
+    if (packagePath.equals("domain")) {
+      System.out.println("debug");
+    }
     final Package packageTree = getOrCreatePackageTree(model, packagePath);
     final String umlPath = convertJavaPackagePath2UmlPath(splitPackagePath(packagePath));
+    // this is a quickfix, not sure if Uml2Utils.findElement or my code
+    // handles top level packages wrong, investigate laterr
+    if (packageTree.getName().equals(packagePath)){
+      return packageTree;
+    }
     return Uml2Utils.findElement(umlPath, packageTree);
   }
 

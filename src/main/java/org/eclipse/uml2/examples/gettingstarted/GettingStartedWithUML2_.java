@@ -13,6 +13,7 @@
  */
 package org.eclipse.uml2.examples.gettingstarted;
 
+import io.neocdtv.modelling.reverse.serialization.ModelSerializer;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.uml2.common.util.UML2Util;
 import org.eclipse.uml2.uml.AggregationKind;
@@ -29,7 +30,6 @@ import org.eclipse.uml2.uml.Type;
 import org.eclipse.uml2.uml.UMLFactory;
 import org.eclipse.uml2.uml.util.UMLUtil;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 

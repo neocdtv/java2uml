@@ -1,5 +1,6 @@
 package domain.offer;
 
+import domain.SalesStep;
 import domain.customer.ICustomer;
 import domain.vehicle.Car;
 
@@ -9,7 +10,7 @@ import java.util.Set;
 /**
  * @author xix
  */
-public class Offer {
+public class Offer extends SalesStep{
   private Date date;
   private Set<ICustomer> keepers;
   private ICustomer owner;
