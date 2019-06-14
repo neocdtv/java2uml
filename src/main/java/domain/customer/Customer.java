@@ -15,7 +15,7 @@ public class Customer implements ICustomer {
   }
 
   @Override
-  public int compareTo(Object o) {
-    return 0;
+  public String getFirstName() {
+    return null;
   }
 }
