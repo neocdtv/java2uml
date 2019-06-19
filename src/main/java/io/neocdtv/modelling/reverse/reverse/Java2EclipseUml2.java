@@ -70,8 +70,8 @@ public class Java2EclipseUml2 {
       for (JavaClass qClass : qClasses) {
         if (qClass.isEnum()) {
           final Enumeration uEnum = getOrCreateEnum(qClass, model);
-          // BUG? Qdox seems does not recognized OrgType implements IOrgType
-          // that is why the next code block is not working
+          // BUG? Qdox seems not be recognizing OrgType implements IOrgType
+          // that is why the next code block is kicking in
           buildInterfaceRealizations(model, qClass, uEnum);
         } else if (qClass.isInterface()) {
           final Interface uInterface = getOrCreateInterface(qClass, model);
@@ -159,8 +159,6 @@ public class Java2EclipseUml2 {
     return superJavaClass != null && !superJavaClass.isPrimitive(); // CHECK: && !isJavaLibraryType(superJavaClass);
   }
 
-
-  // TODO: unify findClassifier and finaEnum  to findType, use generics?
   private Classifier findClassifier(JavaClass qClass, Model model) {
     try {
       findPackage(model, qClass.getPackageName());
@@ -174,46 +172,10 @@ public class Java2EclipseUml2 {
     }
   }
 
-  // TODO: unify findClassifier and finaEnum  to findType, use generics?
-  private Enumeration findEnum(JavaClass qClass, Model model) {
-    try {
-      findPackage(model, qClass.getPackageName());
-      String umlEnumPath = convertJavaTypePath2UmlTypePath(model.getName(), splitPackagePath(qClass.getPackageName()), qClass.getName());
-      Enumeration uType = Uml2Utils.findElement(umlEnumPath, model);
-      out.println(String.format("Enum '%s' found.", qClass.getFullyQualifiedName()));
-      return uType;
-    } catch (NotFoundException notFoundException) {
-      out.println(String.format("Enum '%s' not found.", qClass.getFullyQualifiedName()));
-      return null;
-    }
-  }
-
   private Model createModel(final String modelName) {
     final Model model = UML_FACTORY.createModel();
     model.setName(modelName);
     return model;
-  }
-
-  private Enumeration getOrCreateEnum(final JavaClass qClass, final Model model) {
-    Enumeration existingClass = findEnum(qClass, model);
-    if (existingClass != null) {
-      return existingClass;
-    }
-
-    return createEnum(qClass, model);
-    // TODO: implement isTypeVisible(qClass) here also? this will result in a enum w/o literals
-
-  }
-
-  private Enumeration createEnum(final JavaClass qClass, final Model model) {
-    final Enumeration uEnum = UML_FACTORY.createEnumeration();
-    uEnum.setName(qClass.getName());
-    out.println(String.format("Enumeration '%s' created.", uEnum.getQualifiedName()));
-    qClass.getEnumConstants().forEach(enumConstant -> {
-      createEnumerationLiteral(uEnum, enumConstant.getName());
-    });
-    addToPackage(model, qClass.getPackageName(), uEnum);
-    return uEnum;
   }
 
   protected static EnumerationLiteral createEnumerationLiteral(
@@ -227,17 +189,28 @@ public class Java2EclipseUml2 {
   }
 
   private Class getOrCreateClass(final JavaClass qClass, final Model model) {
-    Class existingClass = (Class) findClassifier(qClass, model);
-    if (existingClass != null) {
-      return existingClass;
+    Class existing = (Class) findClassifier(qClass, model);
+    if (existing != null) {
+      return existing;
     }
 
     if (isTypeVisible(qClass)) {
-      Class uClass = createClass(qClass, model);
-      return uClass;
+      return createClass(qClass, model);
     } else {
-      Class classWithoutAttributes = createClassWithoutAttributes(qClass, model);
-      return classWithoutAttributes;
+      return createClassWithoutAttributes(qClass, model);
+    }
+  }
+
+  private Enumeration getOrCreateEnum(final JavaClass qClass, final Model model) {
+    Enumeration existing = (Enumeration) findClassifier(qClass, model);
+    if (existing != null) {
+      return existing;
+    }
+
+    if (isTypeVisible(qClass)) {
+      return createEnum(qClass, model);
+    } else {
+      return createEnumWithoutAttributes(qClass, model);
     }
   }
 
@@ -252,18 +225,34 @@ public class Java2EclipseUml2 {
 
   private Class createClass(final JavaClass qClass, final Model model) {
     Class uClass = createClassWithoutAttributes(qClass, model);
-    for (JavaField field : qClass.getFields()) {
-      JavaClass type = field.getType();
-      if (isPrimitiveType(type)) {
-        buildAttribute(model, uClass, field);
-      } else {
-        buildDependency(uClass, field, model);
-      }
-    }
+    createProperties(qClass, model, uClass);
+
     return uClass;
   }
 
-  private void buildDependency(final Class uClass, JavaField field, Model model) {
+  private Enumeration createEnum(final JavaClass qClass, final Model model) {
+    Enumeration uType = createEnumWithoutAttributes(qClass, model);
+    qClass.getEnumConstants().forEach(enumConstant -> {
+      createEnumerationLiteral(uType, enumConstant.getName());
+    });
+    createProperties(qClass, model, uType);
+    return uType;
+  }
+
+  private void createProperties(JavaClass qClass, Model model, Classifier uType) {
+    for (JavaField field : qClass.getFields()) {
+      JavaClass type = field.getType();
+      if (isPrimitiveType(type)) {
+        // attributes are NOT serialized/represented on enums into ECORE and ECORE_JSON, they are visible on UML
+        buildAttribute(model, uType, field);
+      } else {
+        // TOOO:
+        buildDependency(uType, field, model);
+      }
+    }
+  }
+
+  private void buildDependency(final Type uClass, JavaField field, Model model) {
     if (!field.isEnumConstant()) { // omit dependency from enum constants to the same enum.
       final JavaClass fieldType = field.getType();
 
@@ -302,7 +291,7 @@ public class Java2EclipseUml2 {
     return referenced;
   }
 
-  private void buildDependencyWithMultiplicityOne(Class uType, JavaField field, Type referenced) {
+  private void buildDependencyWithMultiplicityOne(Type uType, JavaField field, Type referenced) {
     createAssociation(uType,
         true,
         AggregationKind.NONE_LITERAL,
@@ -335,7 +324,7 @@ public class Java2EclipseUml2 {
   // TODO: handle multiplicity for arrays, lists and sets. Maps? How are they represented in uml?-
   protected Property buildAttribute(
       final Model model,
-      final Class uClass,
+      final Classifier classifier,
       final JavaField field) {
 
     PrimitiveType primitiveAttribute = getOrCreatePrimitiveAttribute(field, model);
@@ -343,19 +332,32 @@ public class Java2EclipseUml2 {
     final int lowerBound = 1;
     final int upperBound = 1; //LiteralUnlimitedNatural.UNLIMITED;
 
-    final Property attribute = uClass.createOwnedAttribute(field.getName(), primitiveAttribute,
-        lowerBound, upperBound);
+    Property property = UML_FACTORY.createProperty();
+    property.setLower(lowerBound);
+    property.setUpper(upperBound);
+    property.setName(field.getName());
+    property.setType(primitiveAttribute);
+    // Class and Enumeration do not have a common ancestor, which would provide the required methods to
+    // add an attribute
+    if (classifier instanceof Enumeration) {
+      ((Enumeration) classifier).getOwnedAttributes().add(property);
+    } else if (classifier instanceof Class) {
+      ((Class) classifier).getOwnedAttributes().add(property);
+    } else {
+      throw new RuntimeException(classifier.getClass().getName() + " not supported yet");
+    }
 
     out.println(String.format("Attribute '%s' : %s [%s..%s] created.", //
-        attribute.getQualifiedName(),
+        property.getQualifiedName(),
         primitiveAttribute.getName(),
         lowerBound,
         (upperBound == LiteralUnlimitedNatural.UNLIMITED)
             ? "*"
             : upperBound));
 
-    return attribute;
+    return property;
   }
+
 
   protected static Association createAssociation(Type type1,
                                                  boolean end1IsNavigable, AggregationKind end1Aggregation,
@@ -424,6 +426,14 @@ public class Java2EclipseUml2 {
     return uClass;
   }
 
+  private Enumeration createEnumWithoutAttributes(final JavaClass qClass, final Model model) {
+    final Enumeration uEnum = UML_FACTORY.createEnumeration();
+    uEnum.setName(qClass.getName());
+    out.println(String.format("Enumeration '%s' created.", uEnum.getQualifiedName()));
+    addToPackage(model, qClass.getPackageName(), uEnum);
+    return uEnum;
+  }
+
   private Interface createInterface(final JavaClass qClass, final Model model) {
     final Interface uInterface = UML_FACTORY.createInterface();
     uInterface.setName(qClass.getName());
@@ -456,11 +466,6 @@ public class Java2EclipseUml2 {
     return Uml2Utils.findElement(umlPath, packageTree);
   }
 
-  /**
-   * @param model
-   * @param packagePath
-   * @return package tree
-   */
   Package getOrCreatePackageTree(final Model model, final String packagePath) {
     return getOrCreatePackageTree(model, model, packagePath, 0);
   }
@@ -497,26 +502,6 @@ public class Java2EclipseUml2 {
 
   List<String> splitPackagePath(String packagePath) {
     return Arrays.asList(packagePath.split(JAVA_PACKAGE_PATH_SEPARATOR_REGEX));
-  }
-
-  String getParentPackageName(final String packagePath) {
-    String[] packagePathParts = packagePath.split(JAVA_PACKAGE_PATH_SEPARATOR_REGEX);
-    return packagePathParts[0];
-  }
-
-  String getChildPackagePath(final String packagePath) {
-    final String[] packagePathParts = packagePath.split(JAVA_PACKAGE_PATH_SEPARATOR_REGEX);
-    if (packagePathParts.length > 1) {
-      ArrayList<String> childPackagePath = new ArrayList<>();
-      for (int i = 1; i < packagePathParts.length; i++) {
-        childPackagePath.add(packagePathParts[i]);
-      }
-      return childPackagePath.stream()
-          .map(i -> i.toString())
-          .collect(Collectors.joining(JAVA_PACKAGE_PATH_SEPARATOR));
-    } else {
-      return null;
-    }
   }
 
   String convertJavaPackagePath2UmlPath(final String modelName, final List<String> packagePath) {

@@ -52,11 +52,11 @@ public class GettingStartedWithUML2_ {
     Collection<EPackage> ePackages = UMLUtil.convertToEcore(model, new HashMap<>());
 
     ModelSerializer.serializeEcore(ePackages,
-        ECLIPSE_PROJECT_MODEL_PATH + "model-epo.ecore");
+        ECLIPSE_PROJECT_MODEL_PATH + "model.ecore");
     ModelSerializer.serializeEcoreJson(ePackages,
-        ECLIPSE_PROJECT_MODEL_PATH + "model-epo.json");
+        ECLIPSE_PROJECT_MODEL_PATH + "model.json");
     ModelSerializer.serializeUml(model,
-        ECLIPSE_PROJECT_MODEL_PATH + "model-epo.uml");
+        ECLIPSE_PROJECT_MODEL_PATH + "model.uml");
   }
 
   public static Model buildModel() {
@@ -65,7 +65,7 @@ public class GettingStartedWithUML2_ {
     banner("Creating root model package and primitive types.");
 
     // Create the root package (a model).
-    Model epo2Model = createModel("epo2");
+    Model epo2Model = createModel("model");
 
     // Create primitive types to be used as types of attributes in our
     // classes.

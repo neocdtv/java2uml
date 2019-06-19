@@ -53,7 +53,7 @@ public class Main {
     file.mkdir();
 
     final Collection<JavaPackage> qPackages = javaProjectBuilder.getPackages();
-    final Model model = Java2EclipseUml2.toUml(qPackages, "simpleModel");
+    final Model model = Java2EclipseUml2.toUml(qPackages, "model");
     final Collection<EPackage> ePackages = UMLUtil.convertToEcore(model.getNearestPackage(), new HashMap<>());
 
     switch (outputFormat) {
@@ -70,7 +70,7 @@ public class Main {
   }
 
   private static String buildOutputFormat(final String outputDirectory, final String ending) {
-    final String filePath = outputDirectory + "model-main." + ending;
+    final String filePath = outputDirectory + "model." + ending;
     LOGGER.info("Writing file: " + filePath);
     return filePath;
   }

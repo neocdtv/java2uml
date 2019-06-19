@@ -6,6 +6,7 @@ package domain.offer;
 public enum Payment {
 	CASH, LEASING;
 
+	private String externalHandler;
 	private InterSource interSource;
 	private ExternalSource externalSource;
 }
