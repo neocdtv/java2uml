@@ -62,28 +62,28 @@ public class Java2EclipseUml2 {
   }
 
   Model convert(final Collection<JavaPackage> qPackages, final String modelName) {
+    configureVisiblePackages(qPackages);
     final Model model = createModel(modelName);
     for (JavaPackage qPackage : qPackages) {
-      String packagePath = qPackage.getName();
-      visiblePackages.add(packagePath);
       final Collection<JavaClass> qClasses = qPackage.getClasses();
       for (JavaClass qClass : qClasses) {
         if (qClass.isEnum()) {
-          final Enumeration uEnum = getOrCreateEnum(qClass, model);
-          // BUG? Qdox seems not be recognizing OrgType implements IOrgType
-          // that is why the next code block is kicking in
-          buildInterfaceRealizations(model, qClass, uEnum);
+          getOrCreateEnum(qClass, model);
         } else if (qClass.isInterface()) {
-          final Interface uInterface = getOrCreateInterface(qClass, model);
-          buildGeneralizations(qClass.getInterfaces(), uInterface, model);
+          getOrCreateInterface(qClass, model);
         } else {
-          final Class uClass = getOrCreateClass(qClass, model);
-          buildInterfaceRealizations(qClass.getInterfaces(), uClass, model);
-          buildGeneralizations(uClass, qClass, model);
+          getOrCreateClass(qClass, model);
         }
       }
     }
     return model;
+  }
+
+  private void configureVisiblePackages(Collection<JavaPackage> qPackages) {
+    qPackages.forEach(qPackage -> {
+      String packagePath = qPackage.getName();
+      visiblePackages.add(packagePath);
+    });
   }
 
   private void buildInterfaceRealizations(Model model, JavaClass qClass, Enumeration uEnum) {
@@ -188,6 +188,7 @@ public class Java2EclipseUml2 {
     return enumerationLiteral;
   }
 
+  // TODO: should buildInterfaceRealizations and buildGeneralizations be also considered for isTypeVisible==false?
   private Class getOrCreateClass(final JavaClass qClass, final Model model) {
     Class existing = (Class) findClassifier(qClass, model);
     if (existing != null) {
@@ -195,22 +196,12 @@ public class Java2EclipseUml2 {
     }
 
     if (isTypeVisible(qClass)) {
-      return createClass(qClass, model);
+      final Class uClass = createClass(qClass, model);
+      buildInterfaceRealizations(qClass.getInterfaces(), uClass, model);
+      buildGeneralizations(uClass, qClass, model);
+      return uClass;
     } else {
       return createClassWithoutAttributes(qClass, model);
-    }
-  }
-
-  private Enumeration getOrCreateEnum(final JavaClass qClass, final Model model) {
-    Enumeration existing = (Enumeration) findClassifier(qClass, model);
-    if (existing != null) {
-      return existing;
-    }
-
-    if (isTypeVisible(qClass)) {
-      return createEnum(qClass, model);
-    } else {
-      return createEnumWithoutAttributes(qClass, model);
     }
   }
 
@@ -220,11 +211,32 @@ public class Java2EclipseUml2 {
       return existing;
     }
 
-    return createInterface(qClass, model);
+    final Interface uInterface = createInterface(qClass, model);
+    buildGeneralizations(qClass.getInterfaces(), uInterface, model);
+    return uInterface;
+  }
+
+  // TODO: should buildInterfaceRealizations be also considered for isTypeVisible==false?
+  private Enumeration getOrCreateEnum(final JavaClass qClass, final Model model) {
+    Enumeration existing = (Enumeration) findClassifier(qClass, model);
+    if (existing != null) {
+      return existing;
+    }
+
+    if (isTypeVisible(qClass)) {
+      Enumeration uEnum = createEnum(qClass, model);
+      // BUG? Qdox seems not be recognizing OrgType implements IOrgType
+      // that is why the next code block is kicking in
+      buildInterfaceRealizations(model, qClass, uEnum);
+      return uEnum;
+    } else {
+      return createEnumWithoutAttributes(qClass, model);
+    }
   }
 
   private Class createClass(final JavaClass qClass, final Model model) {
     Class uClass = createClassWithoutAttributes(qClass, model);
+
     createProperties(qClass, model, uClass);
 
     return uClass;
