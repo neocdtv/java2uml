@@ -48,7 +48,10 @@ import static java.lang.System.out;
 public class Java2EclipseUml2 {
 
   private final static Logger LOGGER = Logger.getLogger(Java2EclipseUml2.class.getSimpleName());
-  // classifiers contained in visiblePackages will be built completely i.e. with all attributed and associations
+  // classifiers contained in visiblePackages will be build completely i.e. with all attributed and associations
+  // classifiers not contained in visiblePackages will be build as a "empty" type e.g. class without attributes
+  // TODO: decide what to do with enums not in visiblePackages, is it even possible to access literals?
+  // TODO: check getOrCreateEnum
   final static UMLFactory UML_FACTORY = UMLFactory.eINSTANCE;
   final static String UML_PACKAGE_PATH_SEPARATOR = "::";
   final static String JAVA_PACKAGE_PATH_SEPARATOR = ".";
@@ -67,63 +70,47 @@ public class Java2EclipseUml2 {
     for (JavaPackage qPackage : qPackages) {
       final Collection<JavaClass> qClasses = qPackage.getClasses();
       for (JavaClass qClass : qClasses) {
-        if (qClass.isEnum()) {
-          getOrCreateEnum(qClass, model);
-        } else if (qClass.isInterface()) {
-          getOrCreateInterface(qClass, model);
-        } else {
-          getOrCreateClass(qClass, model);
-        }
+        getOrCreateType(qClass, model);
       }
     }
     return model;
   }
 
-  private void configureVisiblePackages(Collection<JavaPackage> qPackages) {
+  private void configureVisiblePackages(final Collection<JavaPackage> qPackages) {
     qPackages.forEach(qPackage -> {
       String packagePath = qPackage.getName();
       visiblePackages.add(packagePath);
     });
   }
 
-  private void buildInterfaceRealizations(Model model, JavaClass qClass, Enumeration uEnum) {
+  private void buildInterfaceRealizations(final JavaClass qClass, final Enumeration uEnum, final Model model) {
     qClass.getInterfaces().forEach(implementedInterface -> {
       final Interface uInterface = getOrCreateInterface(implementedInterface, model);
       uEnum.createGeneralization(uInterface);
     });
   }
 
-  private void buildGeneralizations(final Classifier specificClassifier, final JavaClass qClass, final Model model) {
-    final JavaClass superQClass = qClass.getSuperJavaClass();
-    if (determineIfSuperClassShouldBeIncluded(superQClass)) {
-      Classifier generalClassifier = getOrCreateClass(superQClass, model);
-      createGeneralization(specificClassifier, generalClassifier);
+  private void buildGeneralizations(final Classifier uSpecificClassifier, final JavaClass qSpecificClass, final Model model) {
+    final JavaClass qGeneralClass = qSpecificClass.getSuperJavaClass();
+    if (shouldGeneralizationBeProcessed(qGeneralClass)) {
+      Classifier generalClassifier = getOrCreateClass(qGeneralClass, model);
+      createGeneralization(uSpecificClassifier, generalClassifier);
     } else {
-      LOGGER.info("not building super class: " + superQClass != null ? null : superQClass.getCanonicalName() + " for: " + qClass.getClass().getCanonicalName());
+      out.println(String.format("Generalization %s --|> %s skipped.", qSpecificClass.getClass().getCanonicalName(), qGeneralClass != null ? null : qGeneralClass.getCanonicalName()));
     }
   }
 
-  protected void addInterfaceRealization(
-      final Interface uInterface,
-      final Interface contract) {
-
-    uInterface.createGeneralization(contract);
-    out.println(String.format("Generalization %s --|> %s created.",
-        uInterface.getQualifiedName(),
-        contract.getQualifiedName()));
-  }
-
-  protected void addInterfaceRealization(
-      final Class implementingClassifier, final Interface contract) {
+  protected void buildInterfaceRealization(
+      final Class uImplementingClassifier, final Interface uContract) {
 
     InterfaceRealization interfaceRealization = UML_FACTORY.createInterfaceRealization();
-    interfaceRealization.setContract(contract);
-    interfaceRealization.setImplementingClassifier(implementingClassifier);
+    interfaceRealization.setContract(uContract);
+    interfaceRealization.setImplementingClassifier(uImplementingClassifier);
     out.println(String.format("Interface Realization %s --|> %s created.",
-        implementingClassifier.getQualifiedName(),
-        contract.getQualifiedName()));
+        uImplementingClassifier.getQualifiedName(),
+        uContract.getQualifiedName()));
 
-    implementingClassifier.getInterfaceRealizations().add(interfaceRealization);
+    uImplementingClassifier.getInterfaceRealizations().add(interfaceRealization);
   }
 
   protected Generalization createGeneralization(
@@ -139,11 +126,15 @@ public class Java2EclipseUml2 {
     return generalization;
   }
 
-  private void buildGeneralizations(final List<JavaClass> implementedInterfaces, final Interface anInterface, final Model model) {
+  private void buildGeneralizations(final List<JavaClass> qGeneralInterfaces, final Interface uSpecificInterface, final Model model) {
 
-    for (JavaClass implementedInterface : implementedInterfaces) {
-      final Interface uInterface = getOrCreateInterface(implementedInterface, model);
-      addInterfaceRealization(anInterface, uInterface);
+    for (JavaClass implementedInterface : qGeneralInterfaces) {
+      final Interface uGeneralInterface = getOrCreateInterface(implementedInterface, model);
+
+      uSpecificInterface.createGeneralization(uGeneralInterface);
+      out.println(String.format("Generalization %s --|> %s created.",
+          uSpecificInterface.getQualifiedName(),
+          uGeneralInterface.getQualifiedName()));
     }
   }
 
@@ -151,12 +142,13 @@ public class Java2EclipseUml2 {
 
     for (JavaClass implementedInterface : implementedInterfaces) {
       final Interface uInterface = getOrCreateInterface(implementedInterface, model);
-      addInterfaceRealization(uClass, uInterface);
+      buildInterfaceRealization(uClass, uInterface);
     }
   }
 
-  private boolean determineIfSuperClassShouldBeIncluded(final JavaClass superJavaClass) {
-    return superJavaClass != null && !superJavaClass.isPrimitive(); // CHECK: && !isJavaLibraryType(superJavaClass);
+  private boolean shouldGeneralizationBeProcessed(final JavaClass superJavaClass) {
+    return superJavaClass != null && !superJavaClass.isPrimitive();
+    // CHECK: && !isJavaLibraryType(superJavaClass);, where lib in package java*
   }
 
   private Classifier findClassifier(JavaClass qClass, Model model) {
@@ -164,10 +156,10 @@ public class Java2EclipseUml2 {
       findPackage(model, qClass.getPackageName());
       String umlClassPath = convertJavaTypePath2UmlTypePath(model.getName(), splitPackagePath(qClass.getPackageName()), qClass.getName());
       Classifier uClass = Uml2Utils.findElement(umlClassPath, model);
-      out.println(String.format("Classifier '%s' found.", qClass.getFullyQualifiedName()));
+      out.println(String.format("Classifier '%s' found. Create is not needed.", qClass.getFullyQualifiedName()));
       return uClass;
     } catch (NotFoundException notFoundException) {
-      out.println(String.format("Classifier '%s' not found.", qClass.getFullyQualifiedName()));
+      out.println(String.format("Classifier '%s' not found. Create is needed.", qClass.getFullyQualifiedName()));
       return null;
     }
   }
@@ -226,8 +218,8 @@ public class Java2EclipseUml2 {
     if (isTypeVisible(qClass)) {
       Enumeration uEnum = createEnum(qClass, model);
       // BUG? Qdox seems not be recognizing OrgType implements IOrgType
-      // that is why the next code block is kicking in
-      buildInterfaceRealizations(model, qClass, uEnum);
+      // that is why the next code block is not kicking in
+      buildInterfaceRealizations(qClass, uEnum, model);
       return uEnum;
     } else {
       return createEnumWithoutAttributes(qClass, model);
@@ -236,9 +228,7 @@ public class Java2EclipseUml2 {
 
   private Class createClass(final JavaClass qClass, final Model model) {
     Class uClass = createClassWithoutAttributes(qClass, model);
-
     createProperties(qClass, model, uClass);
-
     return uClass;
   }
 
@@ -252,13 +242,13 @@ public class Java2EclipseUml2 {
   }
 
   private void createProperties(JavaClass qClass, Model model, Classifier uType) {
+
     for (JavaField field : qClass.getFields()) {
       JavaClass type = field.getType();
       if (isPrimitiveType(type)) {
-        // attributes are NOT serialized/represented on enums into ECORE and ECORE_JSON, they are visible on UML
-        buildAttribute(model, uType, field);
+        // attributes are NOT serialized/represented on enums into/in ECORE and ECORE_JSON, but on UML
+        buildAttribute(uType, field, model);
       } else {
-        // TOOO:
         buildDependency(uType, field, model);
       }
     }
@@ -268,49 +258,45 @@ public class Java2EclipseUml2 {
     if (!field.isEnumConstant()) { // omit dependency from enum constants to the same enum.
       final JavaClass fieldType = field.getType();
 
-      try {
-        if (fieldType.isArray()) {
-          JavaClass componentType = fieldType.getComponentType();
-          Type referenced = getOrCreateType(model, componentType);
-          addDependencyWithMultiplicityMany(uClass, field, referenced);
-        } else if (fieldType.isA(Collection.class.getName())) { // is this check sufficient, will subtypes like HashSet be recognized
-          final List<JavaType> actualTypeArguments = ((DefaultJavaParameterizedType) fieldType).getActualTypeArguments();
-          final DefaultJavaType componentType = (DefaultJavaType) actualTypeArguments.get(0);
-          Type referenced = getOrCreateType(model, componentType);
-          addDependencyWithMultiplicityMany(uClass, field, referenced);
-        } else if (fieldType.isA(Map.class.getName())) { // is this check sufficient, will subtypes like HashMap be recognized
-          // TODO: handle maps; maps in uml?
-        } else {
-          Type referenced = getOrCreateType(model, fieldType);
-          buildDependencyWithMultiplicityOne(uClass, field, referenced);
-        }
-      } catch (Exception e) {
-        e.printStackTrace();
-
+      if (fieldType.isArray()) {
+        final JavaClass componentType = fieldType.getComponentType();
+        final Type referenced = getOrCreateType(componentType, model);
+        buildDependencyWithMultiplicityMany(uClass, field, referenced);
+      } else if (fieldType.isA(Collection.class.getName())) { // is this check sufficient, will subtypes like HashSet be recognized
+        final List<JavaType> actualTypeArguments = ((DefaultJavaParameterizedType) fieldType).getActualTypeArguments();
+        final DefaultJavaType componentType = (DefaultJavaType) actualTypeArguments.get(0);
+        final Type referenced = getOrCreateType(componentType, model);
+        buildDependencyWithMultiplicityMany(uClass, field, referenced);
+      } else if (fieldType.isA(Map.class.getName())) { // is this check sufficient, will subtypes like HashMap be recognized
+        // TODO: handle maps; maps in uml?
+      } else {
+        final Type referenced = getOrCreateType(fieldType, model);
+        buildDependencyWithMultiplicityOne(uClass, field, referenced);
       }
+
     }
   }
 
-  private Type getOrCreateType(Model model, JavaClass componentType) {
+  private Type getOrCreateType(final JavaClass qClass, final Model model) {
     Type referenced;
-    if (componentType.isEnum()) {
-      referenced = getOrCreateEnum(componentType, model);
-    } else if (componentType.isInterface()) {
-      referenced = getOrCreateInterface(componentType, model);
+    if (qClass.isEnum()) {
+      referenced = getOrCreateEnum(qClass, model);
+    } else if (qClass.isInterface()) {
+      referenced = getOrCreateInterface(qClass, model);
     } else {
-      referenced = getOrCreateClass(componentType, model);
+      referenced = getOrCreateClass(qClass, model);
     }
     return referenced;
   }
 
-  private void buildDependencyWithMultiplicityOne(Type uType, JavaField field, Type referenced) {
-    createAssociation(uType,
+  private void buildDependencyWithMultiplicityOne(final Type uFrom, final JavaField qField, final Type uTo) {
+    createAssociation(uFrom,
         true,
         AggregationKind.NONE_LITERAL,
-        field.getName(),
+        qField.getName(),
         1,
         1,
-        referenced,
+        uTo,
         false,
         AggregationKind.NONE_LITERAL,
         "",
@@ -318,14 +304,14 @@ public class Java2EclipseUml2 {
         1);
   }
 
-  private void addDependencyWithMultiplicityMany(Type uType, JavaField field, Type referenced) {
-    createAssociation(uType,
+  private void buildDependencyWithMultiplicityMany(final Type uFrom, final JavaField qField, final Type uTo) {
+    createAssociation(uFrom,
         true,
         AggregationKind.NONE_LITERAL,
-        field.getName(),
+        qField.getName(),
         0,
         LiteralUnlimitedNatural.UNLIMITED,
-        referenced,
+        uTo,
         false,
         AggregationKind.NONE_LITERAL,
         "",
@@ -335,9 +321,9 @@ public class Java2EclipseUml2 {
 
   // TODO: handle multiplicity for arrays, lists and sets. Maps? How are they represented in uml?-
   protected Property buildAttribute(
-      final Model model,
       final Classifier classifier,
-      final JavaField field) {
+      final JavaField field,
+      final Model model) {
 
     PrimitiveType primitiveAttribute = getOrCreatePrimitiveAttribute(field, model);
 
@@ -349,8 +335,9 @@ public class Java2EclipseUml2 {
     property.setUpper(upperBound);
     property.setName(field.getName());
     property.setType(primitiveAttribute);
-    // Class and Enumeration do not have a common ancestor, which would provide the required methods to
-    // add an attribute
+    // Class and Enumeration do not have a common ancestor in Eclipse UML, which would provide the required methods to
+    // add an attribute, thats why the next if-else part
+    // handling of interface  not needed, since no attributes are possible
     if (classifier instanceof Enumeration) {
       ((Enumeration) classifier).getOwnedAttributes().add(property);
     } else if (classifier instanceof Class) {
@@ -416,7 +403,7 @@ public class Java2EclipseUml2 {
     String name = field.getType().getName();
     try {
       PrimitiveType primitiveType = Uml2Utils.findElement(model.getName() + "::" + name, model);
-      out.println(String.format("Primitive type '%s' found, create not needed.", primitiveType.getQualifiedName()));
+      out.println(String.format("Primitive type '%s' found. Create not needed.", primitiveType.getQualifiedName()));
       return primitiveType;
     } catch (NotFoundException notFoundException) {
       PrimitiveType primitiveType = model.createOwnedPrimitiveType(name);
@@ -433,24 +420,24 @@ public class Java2EclipseUml2 {
   private Class createClassWithoutAttributes(final JavaClass qClass, final Model model) {
     Class uClass = UML_FACTORY.createClass();
     uClass.setName(qClass.getName());
-    out.println(String.format("Class '%s' created.", uClass.getQualifiedName()));
     addToPackage(model, qClass.getPackageName(), uClass);
+    out.println(String.format("Class '%s' created.", uClass.getQualifiedName()));
     return uClass;
   }
 
   private Enumeration createEnumWithoutAttributes(final JavaClass qClass, final Model model) {
     final Enumeration uEnum = UML_FACTORY.createEnumeration();
     uEnum.setName(qClass.getName());
-    out.println(String.format("Enumeration '%s' created.", uEnum.getQualifiedName()));
     addToPackage(model, qClass.getPackageName(), uEnum);
+    out.println(String.format("Enumeration '%s' created.", uEnum.getQualifiedName()));
     return uEnum;
   }
 
   private Interface createInterface(final JavaClass qClass, final Model model) {
     final Interface uInterface = UML_FACTORY.createInterface();
     uInterface.setName(qClass.getName());
-    out.println(String.format("Interface '%s' created.", uInterface.getQualifiedName()));
     addToPackage(model, qClass.getPackageName(), uInterface);
+    out.println(String.format("Interface '%s' created.", uInterface.getQualifiedName()));
     return uInterface;
   }
 
@@ -465,9 +452,6 @@ public class Java2EclipseUml2 {
   }
 
   Package findPackage(final Model model, final String packagePath) {
-    if (packagePath.equals("domain")) {
-      System.out.println("debug");
-    }
     final Package packageTree = getOrCreatePackageTree(model, packagePath);
     final String umlPath = convertJavaPackagePath2UmlPath(splitPackagePath(packagePath));
     // this is a quickfix, not sure if Uml2Utils.findElement or my code
