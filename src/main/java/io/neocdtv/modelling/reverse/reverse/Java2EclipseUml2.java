@@ -50,14 +50,14 @@ public class Java2EclipseUml2 {
   private final static Logger LOGGER = Logger.getLogger(Java2EclipseUml2.class.getSimpleName());
   // classifiers contained in visiblePackages will be build completely i.e. with all attributed and associations
   // classifiers not contained in visiblePackages will be build as a "empty" type e.g. class without attributes
-  // TODO: decide what to do with enums not in visiblePackages, is it even possible to access literals?
-  // TODO: check getOrCreateEnum
-  final static UMLFactory UML_FACTORY = UMLFactory.eINSTANCE;
-  final static String UML_PACKAGE_PATH_SEPARATOR = "::";
-  final static String JAVA_PACKAGE_PATH_SEPARATOR = ".";
-  final static String JAVA_PACKAGE_PATH_SEPARATOR_REGEX = "\\" + JAVA_PACKAGE_PATH_SEPARATOR;
+  // TODO: decide what to do with enums not in visiblePackages, is it even possible to access literals, which are not in qdox source?
+  // TODO: how to handle types from packages like: java.lang, javax?
+  // TODO: add unit tests!
+  private final static UMLFactory UML_FACTORY = UMLFactory.eINSTANCE;
+  private final static String UML_PACKAGE_PATH_SEPARATOR = "::";
+  private final static String JAVA_PACKAGE_PATH_SEPARATOR = ".";
+  private final static String JAVA_PACKAGE_PATH_SEPARATOR_REGEX = "\\" + JAVA_PACKAGE_PATH_SEPARATOR;
   private final Set<String> visiblePackages = new HashSet<>();
-  // the rest will be just included in the model to build references from visiblePackages classifiers
 
   public static Model toUml(final Collection<JavaPackage> qPackages, final String modelName) {
     final Java2EclipseUml2 java2EclipseUml2 = new Java2EclipseUml2();
@@ -246,7 +246,7 @@ public class Java2EclipseUml2 {
     for (JavaField field : qClass.getFields()) {
       JavaClass type = field.getType();
       if (isPrimitiveType(type)) {
-        // attributes are NOT serialized/represented on enums into/in ECORE and ECORE_JSON, but on UML
+        // attributes are NOT serialized/represented on enums into/in ECORE and ECORE_JSON, but into/in UML
         buildAttribute(uType, field, model);
       } else {
         buildDependency(uType, field, model);
@@ -259,22 +259,31 @@ public class Java2EclipseUml2 {
       final JavaClass fieldType = field.getType();
 
       if (fieldType.isArray()) {
-        final JavaClass componentType = fieldType.getComponentType();
-        final Type referenced = getOrCreateType(componentType, model);
-        buildDependencyWithMultiplicityMany(uClass, field, referenced);
-      } else if (fieldType.isA(Collection.class.getName())) { // is this check sufficient, will subtypes like HashSet be recognized
-        final List<JavaType> actualTypeArguments = ((DefaultJavaParameterizedType) fieldType).getActualTypeArguments();
-        final DefaultJavaType componentType = (DefaultJavaType) actualTypeArguments.get(0);
-        final Type referenced = getOrCreateType(componentType, model);
-        buildDependencyWithMultiplicityMany(uClass, field, referenced);
-      } else if (fieldType.isA(Map.class.getName())) { // is this check sufficient, will subtypes like HashMap be recognized
-        // TODO: handle maps; maps in uml?
+        handleArray(uClass, field, model, fieldType);
+      } else if (fieldType.isA(Collection.class.getName())) { // TODO: is this check sufficient, will subtypes like HashSet be recognized
+        handleCollection(uClass, field, model, (DefaultJavaParameterizedType) fieldType);
+      } else if (fieldType.isA(Map.class.getName())) { // TODO: is this check sufficient, will subtypes like HashMap be recognized
+        // TODO: handle maps;
+        // TODO: how to represent maps in UML
+        out.println("Association to maps skipped.");
       } else {
         final Type referenced = getOrCreateType(fieldType, model);
         buildDependencyWithMultiplicityOne(uClass, field, referenced);
       }
-
     }
+  }
+
+  private void handleCollection(Type uClass, JavaField field, Model model, DefaultJavaParameterizedType fieldType) {
+    final List<JavaType> actualTypeArguments = fieldType.getActualTypeArguments();
+    final DefaultJavaType componentType = (DefaultJavaType) actualTypeArguments.get(0);
+    final Type referenced = getOrCreateType(componentType, model);
+    buildDependencyWithMultiplicityMany(uClass, field, referenced);
+  }
+
+  private void handleArray(Type uClass, JavaField field, Model model, JavaClass fieldType) {
+    final JavaClass componentType = fieldType.getComponentType();
+    final Type referenced = getOrCreateType(componentType, model);
+    buildDependencyWithMultiplicityMany(uClass, field, referenced);
   }
 
   private Type getOrCreateType(final JavaClass qClass, final Model model) {
@@ -319,7 +328,8 @@ public class Java2EclipseUml2 {
         1);
   }
 
-  // TODO: handle multiplicity for arrays, lists and sets. Maps? How are they represented in uml?-
+  // TODO: handle multiplicity to primitive attributes
+  // TODO: how is multiplicity to primitive attributes represented in UML?
   protected Property buildAttribute(
       final Classifier classifier,
       final JavaField field,
@@ -357,7 +367,7 @@ public class Java2EclipseUml2 {
     return property;
   }
 
-
+  // TODO: refactor somehow, this is really unreadable!
   protected static Association createAssociation(Type type1,
                                                  boolean end1IsNavigable, AggregationKind end1Aggregation,
                                                  String end1Name, int end1LowerBound, int end1UpperBound,
@@ -399,6 +409,7 @@ public class Java2EclipseUml2 {
     return association;
   }
 
+  // TODO: diff between attribute and primitive attribute?
   private PrimitiveType getOrCreatePrimitiveAttribute(JavaField field, Model model) {
     String name = field.getType().getName();
     try {
@@ -466,6 +477,7 @@ public class Java2EclipseUml2 {
     return getOrCreatePackageTree(model, model, packagePath, 0);
   }
 
+  // TODO: remove duplication, remove PackageConverter?
   Package getOrCreatePackageTree(final Model model, final Package parentPackage, final String packagePath, int packagePathThreshold) {
     Package packageToGetOrCreate;
     final List<String> packagePathToGetOrCreate = getPackagePathToThreshold(packagePath, packagePathThreshold);
