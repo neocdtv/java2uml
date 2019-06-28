@@ -254,27 +254,30 @@ public class Java2EclipseUml2 {
     }
   }
 
-  private void buildDependency(final Type uClass, JavaField field, Model model) {
+  // TODO: check usage Type vs Classifier
+  private void buildDependency(final Classifier uClassifier, JavaField field, Model model) {
     if (!field.isEnumConstant()) { // omit dependency from enum constants to the same enum.
       final JavaClass fieldType = field.getType();
 
       if (fieldType.isArray()) {
-        handleArray(uClass, field, model, fieldType);
+        handleArray(uClassifier, field, model, fieldType);
       } else if (fieldType.isA(Collection.class.getName())) { // TODO: is this check sufficient, will subtypes like HashSet be recognized
-        handleCollection(uClass, field, model, (DefaultJavaParameterizedType) fieldType);
+        handleCollection(uClassifier, field, model, (DefaultJavaParameterizedType) fieldType);
       } else if (fieldType.isA(Map.class.getName())) { // TODO: is this check sufficient, will subtypes like HashMap be recognized
         // TODO: handle maps;
         // TODO: how to represent maps in UML
         out.println("Association to maps skipped.");
       } else {
         final Type referenced = getOrCreateType(fieldType, model);
-        buildDependencyWithMultiplicityOne(uClass, field, referenced);
+        buildDependencyWithMultiplicityOne(uClassifier, field, referenced);
       }
     }
   }
 
   private void handleCollection(Type uClass, JavaField field, Model model, DefaultJavaParameterizedType fieldType) {
     final List<JavaType> actualTypeArguments = fieldType.getActualTypeArguments();
+    // TODO: is get(0) a problem, can there be > 1
+    // TODO: handle old school without generics?
     final DefaultJavaType componentType = (DefaultJavaType) actualTypeArguments.get(0);
     final Type referenced = getOrCreateType(componentType, model);
     buildDependencyWithMultiplicityMany(uClass, field, referenced);
@@ -331,11 +334,11 @@ public class Java2EclipseUml2 {
   // TODO: handle multiplicity to primitive attributes
   // TODO: how is multiplicity to primitive attributes represented in UML?
   protected Property buildAttribute(
-      final Classifier classifier,
+      final Classifier uClassifier,
       final JavaField field,
       final Model model) {
 
-    PrimitiveType primitiveAttribute = getOrCreatePrimitiveAttribute(field, model);
+    Type primitiveAttribute = getOrCreatePrimitiveAttribute(field, model);
 
     final int lowerBound = 1;
     final int upperBound = 1; //LiteralUnlimitedNatural.UNLIMITED;
@@ -348,12 +351,12 @@ public class Java2EclipseUml2 {
     // Class and Enumeration do not have a common ancestor in Eclipse UML, which would provide the required methods to
     // add an attribute, thats why the next if-else part
     // handling of interface  not needed, since no attributes are possible
-    if (classifier instanceof Enumeration) {
-      ((Enumeration) classifier).getOwnedAttributes().add(property);
-    } else if (classifier instanceof Class) {
-      ((Class) classifier).getOwnedAttributes().add(property);
+    if (uClassifier instanceof Enumeration) {
+      ((Enumeration) uClassifier).getOwnedAttributes().add(property);
+    } else if (uClassifier instanceof Class) {
+      ((Class) uClassifier).getOwnedAttributes().add(property);
     } else {
-      throw new RuntimeException(classifier.getClass().getName() + " not supported yet");
+      throw new RuntimeException(uClassifier.getClass().getName() + " not supported yet");
     }
 
     out.println(String.format("Attribute '%s' : %s [%s..%s] created.", //
