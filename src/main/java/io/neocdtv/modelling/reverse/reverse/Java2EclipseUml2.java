@@ -34,7 +34,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static java.lang.System.out;
@@ -47,7 +46,6 @@ import static java.lang.System.out;
  */
 public class Java2EclipseUml2 {
 
-  private final static Logger LOGGER = Logger.getLogger(Java2EclipseUml2.class.getSimpleName());
   // classifiers contained in visiblePackages will be build completely i.e. with all attributed and associations
   // classifiers not contained in visiblePackages will be build as a "empty" type e.g. class without attributes
   // TODO: decide what to do with enums not in visiblePackages, is it even possible to access literals, which are not in qdox source?
@@ -245,6 +243,15 @@ public class Java2EclipseUml2 {
 
     for (JavaField field : qClass.getFields()) {
       JavaClass type = field.getType();
+      if (isContainer(type)) {
+        // multiplicity 0..*
+      } else {
+        // multiplicity 1..1
+      }
+      /*
+      if multiply type
+         
+       */
       if (isPrimitiveType(type)) {
         // attributes are NOT serialized/represented on enums into/in ECORE and ECORE_JSON, but into/in UML
         buildAttribute(uType, field, model);
@@ -252,6 +259,12 @@ public class Java2EclipseUml2 {
         buildDependency(uType, field, model);
       }
     }
+  }
+
+  private boolean isContainer(JavaClass type) {
+    return type.isArray() ||
+        type.isA(Collection.class.getName()) ||
+        type.isA(Map.class.getName());
   }
 
   // TODO: check usage Type vs Classifier

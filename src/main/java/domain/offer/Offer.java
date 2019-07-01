@@ -21,4 +21,6 @@ public class Offer extends SalesStep{
   private ICustomer contactPerson;
   private ICustomer conditionProvider;
   private Payment payment;
+  // TODO: private int[] externalOfferIds;
+  // causes nullpointer on Java2EclipseUml2.isPrimitiveType
 }
