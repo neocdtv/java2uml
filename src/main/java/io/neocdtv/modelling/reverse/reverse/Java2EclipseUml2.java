@@ -262,9 +262,9 @@ public class Java2EclipseUml2 {
   }
 
   private boolean isContainer(JavaClass type) {
-    return type.isArray() ||
+    return !type.isPrimitive() && (type.isArray() ||
         type.isA(Collection.class.getName()) ||
-        type.isA(Map.class.getName());
+        type.isA(Map.class.getName()));
   }
 
   // TODO: check usage Type vs Classifier
