@@ -246,17 +246,13 @@ public class Java2EclipseUml2 {
       if (isContainer(type)) {
         // multiplicity 0..*
       } else {
-        // multiplicity 1..1
-      }
-      /*
-      if multiply type
-         
-       */
-      if (isPrimitiveType(type)) {
-        // attributes are NOT serialized/represented on enums into/in ECORE and ECORE_JSON, but into/in UML
-        buildAttribute(uType, field, model);
-      } else {
-        buildDependency(uType, field, model);
+        if (isPrimitiveType(type)) {
+          // attributes are NOT serialized/represented on enums into/in ECORE and ECORE_JSON, but into/in UML
+          buildAttributeMultiplicityOne(uType, field, model);
+        } else {
+          Type referenced = getOrCreateType(qClass, model);
+          buildDependencyWithMultiplicityOne(uType, field, referenced);
+        }
       }
     }
   }
@@ -281,8 +277,7 @@ public class Java2EclipseUml2 {
         // TODO: how to represent maps in UML
         out.println("Association to maps skipped.");
       } else {
-        final Type referenced = getOrCreateType(fieldType, model);
-        buildDependencyWithMultiplicityOne(uClassifier, field, referenced);
+
       }
     }
   }
@@ -346,7 +341,7 @@ public class Java2EclipseUml2 {
 
   // TODO: handle multiplicity to primitive attributes
   // TODO: how is multiplicity to primitive attributes represented in UML?
-  protected Property buildAttribute(
+  protected Property buildAttributeMultiplicityOne(
       final Classifier uClassifier,
       final JavaField field,
       final Model model) {
