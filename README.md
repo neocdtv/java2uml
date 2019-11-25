@@ -17,6 +17,6 @@ build
         mvn clean install
 run
 ======
-        java -jar target/java2uml.jar -packageInputConfigs="packageInputConfigs.json" -outputDir=. -outputFormat=UML
+        java -jar target/java2uml.jar -packageInputConfigs="packageInputConfigs.json" -outputDir=target -outputFormat=UML
 
 PackageInputConfigs is a small json config, where you can define, which packages at which location should be processed. You can find an example in the project.
